@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace KeyManagementService
+namespace EdgeSecrets.KeyManagement
 {
     public class KeyManagementService : IKeyManagementService
     {
@@ -12,14 +12,14 @@ namespace KeyManagementService
             _cryptoProvider = cryptoProvider;
         }
 
-        public Task<string> DecryptAsync(string ciphertext)
+        public async Task<string> DecryptAsync(string ciphertext)
         {
-            throw new NotImplementedException();
+            return await _cryptoProvider.DecryptAsync(ciphertext, "key", KeyType.RSA);
         }
 
-        public Task<string> EncryptAsync(string plaintext)
+        public async Task<string> EncryptAsync(string plaintext)
         {
-            throw new NotImplementedException();
+            return await _cryptoProvider.EncryptAsync(plaintext, "key", KeyType.RSA);
         }
 
         public Task ForgetMeAsync()

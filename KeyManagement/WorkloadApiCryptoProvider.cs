@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KeyManagementService
+namespace EdgeSecrets.KeyManagement
 {
     public class WorkloadApiCryptoProvider : ICryptoProvider
     {

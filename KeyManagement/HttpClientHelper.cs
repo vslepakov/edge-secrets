@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Threading;
 
-namespace KeyManagementService
+namespace EdgeSecrets.KeyManagement
 {
     internal class HttpClientHelper
     {

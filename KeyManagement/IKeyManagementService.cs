@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace KeyManagementService
+namespace EdgeSecrets.KeyManagement
 {
     public interface IKeyManagementService
     {

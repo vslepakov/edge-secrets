@@ -1,4 +1,4 @@
-﻿namespace KeyManagementService
+﻿namespace EdgeSecrets.KeyManagement
 {
     public enum KeyType
     {

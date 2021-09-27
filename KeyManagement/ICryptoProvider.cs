@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace KeyManagementService
+namespace EdgeSecrets.KeyManagement
 {
     public interface ICryptoProvider
     {
