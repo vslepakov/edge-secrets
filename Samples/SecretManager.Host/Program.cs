@@ -14,18 +14,31 @@ namespace EdgeSecrets.Samples.SecretManager.Host
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
             var manager = new SecretManager.Common.SecretManager(cryptoProvider, secretStore);
 
-            string key = "test";
+            string keyA = "test";
 
-            await manager.SetSecretAsync(key, "1234");
-            string value1 = await manager.GetSecretAsync(key);
-            Console.WriteLine($"Key {key} has value {value1}");
+            await manager.SetSecretAsync(keyA, "1234");
+            string valueA1 = await manager.GetSecretAsync(keyA);
+            Console.WriteLine($"Key {keyA} has value {valueA1}");
 
-            string value2 = await manager.GetSecretAsync(key);
-            Console.WriteLine($"Key {key} has value {value2}");
+            string valueA2 = await manager.GetSecretAsync(keyA);
+            Console.WriteLine($"Key {keyA} has value {valueA2}");
 
-            await manager.SetSecretAsync(key, "abcdef");
-            string value3 = await manager.GetSecretAsync(key);
-            Console.WriteLine($"Key {key} has value {value3}");
+            await manager.SetSecretAsync(keyA, "abcdef");
+            string valueA3 = await manager.GetSecretAsync(keyA);
+            Console.WriteLine($"Key {keyA} has value {valueA3}");
+
+            string keyB = "secret";
+
+            await manager.SetSecretAsync(keyB, "azure");
+            string valueB1 = await manager.GetSecretAsync(keyB);
+            Console.WriteLine($"Key {keyB} has value {valueB1}");
+
+            string valueB2 = await manager.GetSecretAsync(keyB);
+            Console.WriteLine($"Key {keyB} has value {valueB2}");
+
+            await manager.SetSecretAsync(keyB, "veryverysecret");
+            string valueB3 = await manager.GetSecretAsync(keyB);
+            Console.WriteLine($"Key {keyB} has value {valueB3}");
         }
 
         static void Main(string[] args)
