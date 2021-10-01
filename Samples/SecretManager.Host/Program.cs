@@ -43,7 +43,7 @@ namespace EdgeSecrets.Samples.SecretManager.Host
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("SecretManager test");
             GetSecretAsync().GetAwaiter().GetResult();
         }
     }
