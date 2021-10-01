@@ -14,12 +14,12 @@ namespace EdgeSecrets.KeyManagement
 
         public async Task<string> DecryptAsync(string ciphertext)
         {
-            throw new NotImplementedException();
+            return await _cryptoProvider.DecryptAsync(ciphertext, "key", KeyType.RSA);
         }
 
         public async Task<string> EncryptAsync(string plaintext)
         {
-            throw new NotImplementedException();
+            return await _cryptoProvider.EncryptAsync(plaintext, "key", KeyType.RSA);
         }
 
         public Task ForgetMeAsync()
