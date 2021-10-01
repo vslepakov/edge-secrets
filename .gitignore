@@ -6,6 +6,7 @@
 # application files
 secrets.json
 .env
+Samples/config/
 
 # User-specific files
 *.rsuser

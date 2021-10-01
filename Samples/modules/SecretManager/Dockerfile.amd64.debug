@@ -4,6 +4,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends unzip procps && \
     rm -rf /var/lib/apt/lists/*
 
+USER root
+RUN mkdir /usr/local/cache
+RUN chmod 777 /usr/local/cache
+
 RUN useradd -ms /bin/bash moduleuser
 USER moduleuser
 RUN curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l ~/vsdbg

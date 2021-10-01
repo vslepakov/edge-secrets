@@ -62,7 +62,7 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
         static async Task GetSecrets()
         {
             ICryptoProvider cryptoProvider = new MyTestCryptoProvider();
-            ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
+            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
             var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, secretStore);
 
