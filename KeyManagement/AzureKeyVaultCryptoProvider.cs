@@ -13,20 +13,20 @@ namespace EdgeSecrets.KeyManagement
         {
             var cryptographyClient = new CryptographyClient(new Uri(keyId), new EnvironmentCredential());
 
-            var ciphertextBytes = Encoding.ASCII.GetBytes(ciphertext);
+            var ciphertextBytes = Convert.FromBase64String(ciphertext);
             var decryptResult = await cryptographyClient.DecryptAsync(EncryptionAlgorithm.RsaOaep, ciphertextBytes);
 
-            return Encoding.ASCII.GetString(decryptResult.Plaintext);
+            return Encoding.UTF8.GetString(decryptResult.Plaintext);
         }
 
         public async Task<string> EncryptAsync(string plaintext, string keyId, KeyType keyType, CancellationToken ct = default)
         {
             var cryptographyClient = new CryptographyClient(new Uri(keyId), new EnvironmentCredential());
 
-            var plaintextBytes = Encoding.ASCII.GetBytes(plaintext);
+            var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
             var encryptResult = await cryptographyClient.EncryptAsync(EncryptionAlgorithm.RsaOaep, plaintextBytes);
 
-            return Encoding.ASCII.GetString(encryptResult.Ciphertext);
+            return Convert.ToBase64String(encryptResult.Ciphertext);
         }
     }
 }
