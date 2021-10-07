@@ -5,23 +5,25 @@ namespace EdgeSecrets.KeyManagement
 {
     public class KeyManagementService : IKeyManagementService
     {
-        // TODO: hard coded for now. Device how to handle KEY IDs
-        private const string KEY_ID = "https://keyvault-ca-2.vault.azure.net/keys/kms-key/84e7576868ff452b918ae5eeb05cf2e0";
         private readonly ICryptoProvider _cryptoProvider;
+        private readonly string _keyId;
+        private readonly KeyType _keyType;
 
-        public KeyManagementService(ICryptoProvider cryptoProvider)
+        public KeyManagementService(string keyId, KeyType keyType, ICryptoProvider cryptoProvider)
         {
             _cryptoProvider = cryptoProvider;
+            _keyId = keyId;
+            _keyType = keyType;
         }
 
         public async Task<string> DecryptAsync(string ciphertext)
         {
-            return await _cryptoProvider.DecryptAsync(ciphertext, KEY_ID, KeyType.RSA);
+            return await _cryptoProvider.DecryptAsync(ciphertext, _keyId, _keyType);
         }
 
         public async Task<string> EncryptAsync(string plaintext)
         {
-            return await _cryptoProvider.EncryptAsync(plaintext, KEY_ID, KeyType.RSA);
+            return await _cryptoProvider.EncryptAsync(plaintext, _keyId, _keyType);
         }
 
         public Task ForgetMeAsync()

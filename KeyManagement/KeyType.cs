@@ -3,6 +3,7 @@
     public enum KeyType
     {
         ECC,
-        RSA
+        RSA,
+        Symmetric
     }
 }

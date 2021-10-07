@@ -11,8 +11,10 @@ namespace Tests.KeyManagementTests
         {
             // Arrange
             const string PLAINTEXT = "Hello World";
+            const string KEY_ID = "https://keyvault-ca-2.vault.azure.net/keys/kms-key/84e7576868ff452b918ae5eeb05cf2e0";
+
             var akvProvider = new AzureKeyVaultCryptoProvider();
-            var kms = new KeyManagementService(akvProvider);
+            var kms = new KeyManagementService(KEY_ID, KeyType.RSA, akvProvider);
 
             // Act
             var cipherText = await kms.EncryptAsync(PLAINTEXT);
