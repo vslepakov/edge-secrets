@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using EdgeSecrets.KeyManagement;
 using EdgeSecrets.Samples.SecretManager.Common;
+using KeyManagement;
 
 namespace EdgeSecrets.Samples.SecretManager.Common
 {
@@ -15,7 +16,7 @@ namespace EdgeSecrets.Samples.SecretManager.Common
         {
             _secretStore = secretStore;
             _cryptoProvider = cryptoProvider;
-            _keyManager = new KeyManagementService("KEY_ID", KeyType.RSA, _cryptoProvider);
+            _keyManager = new KeyManagementService(new KeyOptions { KeyId = "KEY_ID", KeyType = KeyType.RSA }, _cryptoProvider);
         }
 
         public async Task<string> GetSecretAsync(string key)

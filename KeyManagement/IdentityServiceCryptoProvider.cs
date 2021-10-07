@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using KeyManagement;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -19,9 +20,9 @@ namespace EdgeSecrets.KeyManagement
             _httpClient = HttpClientHelper.GetUnixDomainSocketHttpClient(KEYD_SOCKET, CancellationToken.None);
         }
 
-        public async Task<string> EncryptAsync(string plaintext, string keyId, KeyType keyType, CancellationToken ct = default)
+        public async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, CancellationToken ct = default)
         {
-            var keyHandle = await GetKeyHandle(keyId);
+            var keyHandle = await GetKeyHandle(keyOptions.KeyId);
 
             var payload = new
             {
@@ -41,9 +42,9 @@ namespace EdgeSecrets.KeyManagement
             return ciphertext;
         }
 
-        public async Task<string> DecryptAsync(string ciphertext, string keyId, KeyType keyType, CancellationToken ct = default)
+        public async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, CancellationToken ct = default)
         {
-            var keyHandle = await GetKeyHandle(keyId);
+            var keyHandle = await GetKeyHandle(keyOptions.KeyId);
 
             var payload = new
             {
