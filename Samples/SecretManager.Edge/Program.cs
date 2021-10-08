@@ -61,10 +61,21 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
 
         static async Task GetSecrets()
         {
-            ICryptoProvider cryptoProvider = new MyTestCryptoProvider();
+            string KEY_ID = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
+
+            //ICryptoProvider cryptoProvider = new MyTestCryptoProvider();
+            var cryptoProvider = new AzureKeyVaultCryptoProvider();
+            var kms = new KeyOptions 
+            {
+                KeyId = KEY_ID, 
+                KeyType = KeyType.RSA,
+                KeySize = 2048
+            };
+
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
-            var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, secretStore);
+            var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, kms, secretStore);
+            Console.WriteLine($"EdgeSecret test using Crypte Provider {cryptoProvider}");
 
             string keyA = "test";
 

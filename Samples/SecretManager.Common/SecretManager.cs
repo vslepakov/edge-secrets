@@ -12,11 +12,11 @@ namespace EdgeSecrets.Samples.SecretManager.Common
         private ICryptoProvider _cryptoProvider;
         private KeyManagementService _keyManager;
 
-        public SecretManager(ICryptoProvider cryptoProvider, ISecretStore secretStore)
+        public SecretManager(ICryptoProvider cryptoProvider, KeyOptions keyOptions, ISecretStore secretStore)
         {
             _secretStore = secretStore;
             _cryptoProvider = cryptoProvider;
-            _keyManager = new KeyManagementService(new KeyOptions { KeyId = "KEY_ID", KeyType = KeyType.RSA }, _cryptoProvider);
+            _keyManager = new KeyManagementService(keyOptions, _cryptoProvider);
         }
 
         public async Task<string> GetSecretAsync(string key)

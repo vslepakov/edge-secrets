@@ -46,7 +46,20 @@
                 "image": "${MODULES.SecretManager}",
                 "createOptions": "{}"
               },
-              "env": {}
+              "env": {
+                "AZURE_CLIENT_ID": {
+                  "value": "$AZURE_CLIENT_ID"
+                },
+                "AZURE_TENANT_ID": {
+                  "value": "$AZURE_TENANT_ID"
+                },
+                "AZURE_CLIENT_SECRET": {
+                  "value": "$AZURE_CLIENT_SECRET"
+                },
+                "EDGESECRET_KEYID": {
+                  "value": "$EDGESECRET_KEYID"
+                }
+              }
             }
           }
         }
