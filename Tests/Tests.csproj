@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KeyManagement\KeyManagement.csproj" />
+    <ProjectReference Include="..\Samples\SecretManager.Common\SecretManager.Common.csproj" />
   </ItemGroup>
 
 </Project>

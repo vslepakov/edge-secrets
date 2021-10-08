@@ -1,8 +1,7 @@
-using System;
-using System.Threading.Tasks;
-
 namespace EdgeSecrets.Samples.SecretManager.Common
 {
+    using System.Threading.Tasks;
+
     public interface ISecretStore
     {
         Task<string> GetSecretAsync(string key);

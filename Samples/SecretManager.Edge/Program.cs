@@ -63,7 +63,6 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
         {
             string KEY_ID = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
 
-            //ICryptoProvider cryptoProvider = new MyTestCryptoProvider();
             var cryptoProvider = new AzureKeyVaultCryptoProvider();
             var kms = new KeyOptions 
             {
@@ -81,27 +80,27 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
 
             await manager.SetSecretAsync(keyA, "1234");
             string valueA1 = await manager.GetSecretAsync(keyA);
-            Console.WriteLine($"Key {keyA} has value {valueA1}");
+            Console.WriteLine($"Key '{keyA}' has value '{valueA1}'");
 
             string valueA2 = await manager.GetSecretAsync(keyA);
-            Console.WriteLine($"Key {keyA} has value {valueA2}");
+            Console.WriteLine($"Key '{keyA}' has value '{valueA2}'");
 
             await manager.SetSecretAsync(keyA, "abcdef");
             string valueA3 = await manager.GetSecretAsync(keyA);
-            Console.WriteLine($"Key {keyA} has value {valueA3}");
+            Console.WriteLine($"Key '{keyA}' has value '{valueA3}'");
 
             string keyB = "secret";
 
             await manager.SetSecretAsync(keyB, "azure");
             string valueB1 = await manager.GetSecretAsync(keyB);
-            Console.WriteLine($"Key {keyB} has value {valueB1}");
+            Console.WriteLine($"Key '{keyB}' has value '{valueB1}'");
 
             string valueB2 = await manager.GetSecretAsync(keyB);
-            Console.WriteLine($"Key {keyB} has value {valueB2}");
+            Console.WriteLine($"Key '{keyB}' has value '{valueB2}'");
 
             await manager.SetSecretAsync(keyB, "veryverysecret");
             string valueB3 = await manager.GetSecretAsync(keyB);
-            Console.WriteLine($"Key {keyB} has value {valueB3}");
+            Console.WriteLine($"Key '{keyB}' has value '{valueB3}'");
         }
 
         /// <summary>

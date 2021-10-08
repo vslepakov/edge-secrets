@@ -1,9 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 namespace EdgeSecrets.Samples.SecretManager.Common
 {
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
     public class InMemoryCacheSecretStore : ISecretStore
     {
         private ISecretStore _internalSecretStore;

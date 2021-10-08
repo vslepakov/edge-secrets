@@ -1,9 +1,8 @@
-﻿using EdgeSecrets.KeyManagement;
-using KeyManagement;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using EdgeSecrets.KeyManagement;
 using Xunit;
 
-namespace Tests.KeyManagementTests
+namespace Tests
 {
     public class KeyManagementServiceTests
     {

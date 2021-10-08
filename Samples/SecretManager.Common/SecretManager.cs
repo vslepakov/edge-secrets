@@ -1,11 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using EdgeSecrets.KeyManagement;
-using EdgeSecrets.Samples.SecretManager.Common;
-using KeyManagement;
-
-namespace EdgeSecrets.Samples.SecretManager.Common
+﻿namespace EdgeSecrets.Samples.SecretManager.Common
 {
+    using System.Threading.Tasks;
+    using EdgeSecrets.KeyManagement;
+
     public class SecretManager
     {
         private ISecretStore _secretStore;

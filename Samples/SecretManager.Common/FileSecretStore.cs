@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
 namespace EdgeSecrets.Samples.SecretManager.Common
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+
     public class FileSecretStore : ISecretStore
     {
         private string _fileName;
