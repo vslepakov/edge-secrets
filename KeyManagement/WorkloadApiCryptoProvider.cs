@@ -8,19 +8,29 @@ namespace EdgeSecrets.KeyManagement
 {
     public class WorkloadApiCryptoProvider : ICryptoProvider
     {
+        const string initializationVector="init";
         SecurityDaemonClient _securityDaemonClient = new SecurityDaemonClient();
 
         public async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, CancellationToken ct = default)
         {
-            string plaintext = await _securityDaemonClient.DecryptAsync(ciphertext, "boh");
-            return plaintext;
+            return keyOptions.KeyType switch
+            {
+                KeyType.RSA => throw new NotImplementedException(),
+                KeyType.ECC => throw new NotImplementedException(),
+                KeyType.Symmetric => await _securityDaemonClient.DecryptAsync(ciphertext, initializationVector),
+                _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
+            };
         }
 
         public async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, CancellationToken ct = default)
         {
-            
-            string ciphertext = await _securityDaemonClient.EncryptAsync(plaintext, "boh");
-            return ciphertext;
+            return keyOptions.KeyType switch
+            {
+                KeyType.RSA => throw new NotImplementedException(),
+                KeyType.ECC => throw new NotImplementedException(),
+                KeyType.Symmetric => await _securityDaemonClient.EncryptAsync(plaintext, initializationVector),
+                _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
+            };
         }
     }
 }

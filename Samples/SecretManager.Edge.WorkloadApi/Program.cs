@@ -66,7 +66,7 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             var kms = new KeyOptions 
             {
                 KeyId = KEY_ID, 
-                KeyType = KeyType.RSA,
+                KeyType = KeyType.Symmetric,
                 KeySize = 2048
             };
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
