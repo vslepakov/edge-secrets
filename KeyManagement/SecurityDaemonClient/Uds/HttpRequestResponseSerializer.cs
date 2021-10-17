@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.EventGridEdge.IotEdge
+namespace EdgeSecrets.SecurityDaemon
 {
     internal class HttpRequestResponseSerializer
     {

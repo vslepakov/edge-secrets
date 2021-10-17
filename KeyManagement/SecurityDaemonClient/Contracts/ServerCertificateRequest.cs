@@ -5,7 +5,7 @@
 
 using System;
 
-namespace Microsoft.Azure.EventGridEdge.IotEdge
+namespace EdgeSecrets.SecurityDaemon
 {
     public class ServerCertificateRequest
     {

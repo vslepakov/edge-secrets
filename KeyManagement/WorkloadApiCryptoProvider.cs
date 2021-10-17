@@ -2,7 +2,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.EventGridEdge.IotEdge;
+using EdgeSecrets.SecurityDaemon;
 
 namespace EdgeSecrets.KeyManagement
 {
@@ -13,8 +13,6 @@ namespace EdgeSecrets.KeyManagement
         public async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, CancellationToken ct = default)
         {
             string plaintext = await _securityDaemonClient.DecryptAsync(ciphertext, "boh");
-            Console.WriteLine($"DecryptAsync - ciphertext:  {ciphertext}");
-            Console.WriteLine($"DecryptAsync - plaintext:   {plaintext}");
             return plaintext;
         }
 
@@ -22,8 +20,6 @@ namespace EdgeSecrets.KeyManagement
         {
             
             string ciphertext = await _securityDaemonClient.EncryptAsync(plaintext, "boh");
-            Console.WriteLine($"EncryptAsync - plaintext:   {plaintext}");
-            Console.WriteLine($"EncryptAsync - ciphertext:  {ciphertext}");
             return ciphertext;
         }
     }

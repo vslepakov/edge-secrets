@@ -9,7 +9,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.EventGridEdge.IotEdge
+namespace EdgeSecrets.SecurityDaemon
 {
     /// <summary>
     /// Unix domain message handler.

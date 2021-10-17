@@ -6,7 +6,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Microsoft.Azure.EventGridEdge.IotEdge
+namespace EdgeSecrets.SecurityDaemon
 {
     public class PrivateKey
     {

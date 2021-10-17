@@ -11,7 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.EventGridEdge.IotEdge
+namespace EdgeSecrets.SecurityDaemon
 {
     [Obsolete("This is a pubternal API that's being made public as a stop-gap measure. It will be removed from the Event Grid SDK nuget package as soon IoT Edge SDK ships with a built-in a security daemon client.")]
     public class SecurityDaemonHttpClientFactory : IHttpClientFactory
