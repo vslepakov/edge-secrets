@@ -58,6 +58,12 @@
                 },
                 "EDGESECRET_KEYID": {
                   "value": "$EDGESECRET_KEYID"
+                },
+                "EDGESECRET_CRYPTO_PROVIDER": {
+                  "value": "$EDGESECRET_CRYPTO_PROVIDER"
+                },
+                "EDGESECRET_INIT_VECTOR": {
+                  "value": "$EDGESECRET_INIT_VECTOR"
                 }
               }
             }
