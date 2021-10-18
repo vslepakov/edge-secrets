@@ -1,10 +1,7 @@
 namespace EdgeSecrets.Samples.SecretManager.Edge
 {
     using System;
-    using System.IO;
-    using System.Runtime.InteropServices;
     using System.Runtime.Loader;
-    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -62,19 +59,47 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
         static async Task GetSecrets()
         {
             string KEY_ID = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
+            string CRYPTO_PROVIDER = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER");
+            //TO DO: pass over the Initialization Vector
+            string INIT_VECTOR = Environment.GetEnvironmentVariable("EDGESECRET_INIT_VECTOR");
 
-            var cryptoProvider = new AzureKeyVaultCryptoProvider();
-            var kms = new KeyOptions 
+            ICryptoProvider cryptoProvider;
+            KeyOptions kms;
+            switch (CRYPTO_PROVIDER)
             {
-                KeyId = KEY_ID, 
-                KeyType = KeyType.RSA,
-                KeySize = 2048
-            };
+                default:
+                    throw new ArgumentException($"'{CRYPTO_PROVIDER}' is not a supported crypto provider");
+                                    
+                case "workload-api":
+                    cryptoProvider = new WorkloadApiCryptoProvider();
+
+                    //TO DO: pass over the Initialization Vector to WorkloadApiCryptoProvider
+					Console.WriteLine($"initialization vector '{INIT_VECTOR}'");
+                    
+                    kms = new KeyOptions 
+                    {
+                        KeyId = KEY_ID, 
+                        KeyType = KeyType.Symmetric,
+                        KeySize = 2048
+                    };
+                    break;
+
+                case "azure-kv":
+                    cryptoProvider = new AzureKeyVaultCryptoProvider();
+
+                    kms = new KeyOptions 
+                    {
+                        KeyId = KEY_ID, 
+                        KeyType = KeyType.RSA,
+                        KeySize = 2048
+                    };
+                    break;
+            }; 
 
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
             var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, kms, secretStore);
-            Console.WriteLine($"EdgeSecret test using Crypte Provider {cryptoProvider}");
+            Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
 
             string keyA = "test";
 
