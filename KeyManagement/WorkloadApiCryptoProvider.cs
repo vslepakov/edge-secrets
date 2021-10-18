@@ -8,7 +8,7 @@ namespace EdgeSecrets.KeyManagement
 {
     public class WorkloadApiCryptoProvider : ICryptoProvider
     {
-        const string _initializationVector="init"; // TEMP
+        private string _initializationVector="0123456789"; // TO DO: hardcoded for now.  
         SecurityDaemonClient _securityDaemonClient = new SecurityDaemonClient();
 
         public async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, CancellationToken ct = default)
