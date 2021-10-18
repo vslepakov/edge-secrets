@@ -246,8 +246,8 @@ namespace EdgeSecrets.SecurityDaemon
         {
             var request = new EncryptRequest
             {
-                InitializationVector = initializationVector,
-                Plaintext = plaintext
+                InitializationVector = Convert.ToBase64String(Encoding.UTF8.GetBytes(initializationVector)),
+                Plaintext = Convert.ToBase64String(Encoding.UTF8.GetBytes(plaintext))
             };
 
             string requestString = JsonConvert.SerializeObject(request, Formatting.None, this.jsonSettings);
@@ -270,7 +270,7 @@ namespace EdgeSecrets.SecurityDaemon
         {
             var request = new DecryptRequest
             {
-                InitializationVector = initializationVector,
+                InitializationVector = Convert.ToBase64String(Encoding.UTF8.GetBytes(initializationVector)),
                 Ciphertext = ciphertext
             };
 
@@ -283,7 +283,8 @@ namespace EdgeSecrets.SecurityDaemon
                 if (httpResponse.StatusCode == HttpStatusCode.OK)
                 {
                     DecryptResponse decryptResponse = JsonConvert.DeserializeObject<DecryptResponse>(responsePayload, this.jsonSettings);
-                    return decryptResponse.Plaintext;
+                    
+                    return Encoding.UTF8.GetString(Convert.FromBase64String(decryptResponse.Plaintext));
                 }
 
                 throw new InvalidOperationException($"Failed to execute sign request from IoTEdge security daemon. StatusCode={httpResponse.StatusCode} ReasonPhrase='{httpResponse.ReasonPhrase}' ResponsePayload='{responsePayload}' Request={requestString} This={this}");
