@@ -16,4 +16,4 @@ RUN chmod 777 /usr/local/cache
 RUN useradd -ms /bin/bash moduleuser
 USER moduleuser
 
-ENTRYPOINT ["dotnet", "SecretManager.dll"]
+ENTRYPOINT ["dotnet", "SecretManager.Edge.dll"]

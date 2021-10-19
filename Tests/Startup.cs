@@ -1,9 +1,9 @@
-﻿using System;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-
-namespace Tests
+﻿namespace Tests
 {
+    using System;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Hosting;
+
     public class Startup
     {
         public void ConfigureHost(IHostBuilder hostBuilder)

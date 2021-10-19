@@ -23,4 +23,4 @@ FROM base
 WORKDIR /app
 COPY --from=build-env /app/out ./
 
-ENTRYPOINT ["dotnet", "SecretManager.dll"]
+ENTRYPOINT ["dotnet", "SecretManager.Edge.dll"]

@@ -1,10 +1,10 @@
-﻿using System.Threading.Tasks;
-using EdgeSecrets.KeyManagement;
-using EdgeSecrets.Samples.SecretManager.Common;
-using Xunit;
-
-namespace Tests
+﻿namespace Tests
 {
+    using System.Threading.Tasks;
+    using EdgeSecrets.CryptoProvider;
+    using EdgeSecrets.SecretManager;
+    using Xunit;
+
     public class SecretManagerTests
     {
         [Fact]
@@ -17,7 +17,7 @@ namespace Tests
 
             ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
-            var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, new KeyOptions(), secretStore);
+            var manager = new SecretManagerClient(cryptoProvider, new KeyOptions(), secretStore);
 
             // Act
             string key = "testKey";
@@ -47,7 +47,7 @@ namespace Tests
 
             ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
-            var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, kms, secretStore);
+            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
 
             // Act
             string key = "testKey";

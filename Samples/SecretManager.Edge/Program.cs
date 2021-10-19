@@ -7,8 +7,8 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Transport.Mqtt;
-    using EdgeSecrets.KeyManagement;
-    using EdgeSecrets.Samples.SecretManager.Common;
+    using EdgeSecrets.CryptoProvider;
+    using EdgeSecrets.SecretManager;
 
     class Program
     {
@@ -98,7 +98,7 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
 
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
-            var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, kms, secretStore);
+            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
             Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
 
             string keyA = "test";

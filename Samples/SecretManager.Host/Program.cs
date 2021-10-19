@@ -2,8 +2,8 @@
 {
     using System;
     using System.Threading.Tasks;
-    using EdgeSecrets.KeyManagement;
-    using EdgeSecrets.Samples.SecretManager.Common;
+    using EdgeSecrets.CryptoProvider;
+    using EdgeSecrets.SecretManager;
 
     class Program
     {
@@ -21,7 +21,7 @@
 
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
-            var manager = new EdgeSecrets.Samples.SecretManager.Common.SecretManager(cryptoProvider, kms, secretStore);
+            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
             Console.WriteLine($"EdgeSecret test using Crypte Provider {cryptoProvider}");
 
             string keyA = "test";
