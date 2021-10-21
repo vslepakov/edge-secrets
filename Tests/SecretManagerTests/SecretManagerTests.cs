@@ -16,7 +16,7 @@
             var cryptoProvider = new TestCryptoProvider();
 
             ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
-            ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
+            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, new KeyOptions(), secretStore);
 
             // Act
@@ -46,7 +46,7 @@
             };
 
             ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
-            ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
+            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
 
             // Act
