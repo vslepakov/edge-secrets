@@ -12,6 +12,8 @@
     {
         private const string ENCRYPT_ENDPOINT = "http://keyd.sock/encrypt?api-version=2021-05-01";
         private const string DECRYPT_ENDPOINT = "http://keyd.sock/decrypt?api-version=2021-05-01";
+        private const string GET_ASYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/keypair/{0}?api-version=2021-05-01";
+        private const string GET_SYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/key/{0}?api-version=2021-05-01";
         private const string KEYD_SOCKET = "/run/aziot/keyd.sock";
         private const string SYMMETRIC_ALGORITHM = "AEAD";
         private const string ASYMMETRIC_ALGORITHM = "RSA-PKCS1";
@@ -47,14 +49,9 @@
 
         private async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
-            var keyHandle = await GetKeyHandle(keyOptions.KeyId);
+            var keyHandle = await GetKeyHandle(keyOptions, ct);
 
-            var payload = new
-            {
-                keyHandle,
-                algorithm,
-                plaintext
-            };
+            var payload = new { keyHandle, algorithm, plaintext };
 
             var json = await SendRequestAsync(payload, ENCRYPT_ENDPOINT, ct);
             var ciphertext = JObject.Parse(json)["ciphertext"].ToString();
@@ -64,14 +61,9 @@
 
         private async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
-            var keyHandle = await GetKeyHandle(keyOptions.KeyId);
+            var keyHandle = await GetKeyHandle(keyOptions, ct);
 
-            var payload = new
-            {
-                keyHandle,
-                algorithm,
-                ciphertext
-            };
+            var payload = new{ keyHandle, algorithm, ciphertext };
 
             var json = await SendRequestAsync(payload, DECRYPT_ENDPOINT, ct);
             var plaintext = JObject.Parse(json)["plaintext"].ToString();
@@ -79,10 +71,16 @@
             return plaintext;
         }
 
-        private Task<string> GetKeyHandle(string keyId)
+        private async Task<string> GetKeyHandle(KeyOptions keyOptions, CancellationToken ct = default)
         {
-            // TODO Find a way to get the keyHandle for the keyId
-            return null;
+            var response = (keyOptions.KeyType == KeyType.RSA || keyOptions.KeyType == KeyType.ECC) 
+                ? await _httpClient.GetAsync(string.Format(GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, keyOptions.KeyId), ct)
+                : await _httpClient.GetAsync(string.Format(GET_SYMMETRIC_KEYHANDLE_ENDPOINT, keyOptions.KeyId), ct);
+
+            var json = await response.Content.ReadAsStringAsync(ct);
+            var keyHandle = JObject.Parse(json)["keyHandle"].ToString();
+
+            return keyHandle;
         }
 
         private async Task<string> SendRequestAsync(object payload, string endpoint, CancellationToken ct = default)
