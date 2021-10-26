@@ -52,11 +52,14 @@
 
         private async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
-            var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
-
-            if (plaintextBytes.Length + RSA_PKCS1_PADDING_SIZE_IN_BYTES > keyOptions.KeySize / 8)
+            if(keyOptions.KeyType != KeyType.Symmetric)
             {
-                throw new DataTooLargeException($"Data too large to encrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+                var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
+
+                if (plaintextBytes.Length + RSA_PKCS1_PADDING_SIZE_IN_BYTES > keyOptions.KeySize / 8)
+                {
+                    throw new DataTooLargeException($"Data too large to encrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+                }
             }
 
             var keyHandle = await GetKeyHandle(keyOptions, ct);
@@ -70,11 +73,14 @@
 
         private async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
-            var ciphertextBytes = Convert.FromBase64String(ciphertext);
-
-            if (ciphertextBytes.Length > keyOptions.KeySize / 8)
+            if(keyOptions.KeyType != KeyType.Symmetric)
             {
-                throw new DataTooLargeException($"Data too large to decrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+                var ciphertextBytes = Convert.FromBase64String(ciphertext);
+
+                if (ciphertextBytes.Length > keyOptions.KeySize / 8)
+                {
+                    throw new DataTooLargeException($"Data too large to decrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+                }
             }
 
             var keyHandle = await GetKeyHandle(keyOptions, ct);
