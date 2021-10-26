@@ -54,7 +54,7 @@
         {
             var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
 
-            if (keyOptions.KeyType != KeyType.Symmetric)
+            if (keyOptions.KeyType == KeyType.RSA)
             {
                 if (plaintextBytes.Length + RSA_PKCS1_PADDING_SIZE_IN_BYTES > keyOptions.KeySize / 8)
                 {
@@ -66,19 +66,16 @@
             var payload = new { keyHandle, algorithm, plaintext = Convert.ToBase64String(plaintextBytes) };
 
             var json = await SendRequestAsync(payload, ENCRYPT_ENDPOINT, ct);
-            Console.WriteLine($"Encrypt json: {json}");
-
             var ciphertextAsBase64 = JObject.Parse(json)["ciphertext"].ToString();
+
             return ciphertextAsBase64;
-            //var ciphertextAsBase64EncodedBytes = Convert.FromBase64String(ciphertextAsBase64);
-            //return Encoding.UTF8.GetString(ciphertextAsBase64EncodedBytes);
         }
 
         private async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
             var ciphertextBytes = Convert.FromBase64String(ciphertext);
 
-            if (keyOptions.KeyType != KeyType.Symmetric)
+            if (keyOptions.KeyType == KeyType.RSA)
             {
                 if (ciphertextBytes.Length > keyOptions.KeySize / 8)
                 {
@@ -91,14 +88,14 @@
 
             var json = await SendRequestAsync(payload, DECRYPT_ENDPOINT, ct);
             var plaintextAsBase64 = JObject.Parse(json)["plaintext"].ToString();
-            var plaintextAsBase64EncodedBytes = Convert.FromBase64String(plaintextAsBase64);
 
+            var plaintextAsBase64EncodedBytes = Convert.FromBase64String(plaintextAsBase64);
             return Encoding.UTF8.GetString(plaintextAsBase64EncodedBytes);
         }
 
         private async Task<string> GetKeyHandle(KeyOptions keyOptions, CancellationToken ct = default)
         {
-            var response = (keyOptions.KeyType == KeyType.RSA || keyOptions.KeyType == KeyType.ECC)
+            var response = keyOptions.KeyType == KeyType.RSA
                 ? await _httpClient.GetAsync(string.Format(GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, keyOptions.KeyId), ct)
                 : await _httpClient.GetAsync(string.Format(GET_SYMMETRIC_KEYHANDLE_ENDPOINT, keyOptions.KeyId), ct);
 
@@ -115,8 +112,6 @@
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
 
             var response = await _httpClient.SendAsync(request, ct);
-            Console.WriteLine($"Response: {response.StatusCode}");
-
             return await response.Content.ReadAsStringAsync(ct);
         }
     }
