@@ -3,20 +3,23 @@
     using System;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using EdgeSecrets.CryptoProvider.Exceptions;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     public class IdentityServiceCryptoProvider : ICryptoProvider
     {
-        private const string ENCRYPT_ENDPOINT = "http://keyd.sock/encrypt?api-version=2021-05-01";
-        private const string DECRYPT_ENDPOINT = "http://keyd.sock/decrypt?api-version=2021-05-01";
-        private const string GET_ASYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/keypair/{0}?api-version=2021-05-01";
-        private const string GET_SYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/key/{0}?api-version=2021-05-01";
+        private const string ENCRYPT_ENDPOINT = "http://keyd.sock/encrypt?api-version=2020-09-01";
+        private const string DECRYPT_ENDPOINT = "http://keyd.sock/decrypt?api-version=2020-09-01";
+        private const string GET_ASYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/keypair/{0}?api-version=2020-09-01";
+        private const string GET_SYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/key/{0}?api-version=2020-09-01";
         private const string KEYD_SOCKET = "/run/aziot/keyd.sock";
         private const string SYMMETRIC_ALGORITHM = "AEAD";
         private const string ASYMMETRIC_ALGORITHM = "RSA-PKCS1";
+        private const int RSA_PKCS1_PADDING_SIZE_IN_BYTES = 11;
 
         private readonly HttpClient _httpClient;
 
@@ -49,8 +52,14 @@
 
         private async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
-            var keyHandle = await GetKeyHandle(keyOptions, ct);
+            var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
 
+            if (plaintextBytes.Length + RSA_PKCS1_PADDING_SIZE_IN_BYTES > keyOptions.KeySize / 8)
+            {
+                throw new DataTooLargeException($"Data too large to encrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+            }
+
+            var keyHandle = await GetKeyHandle(keyOptions, ct);
             var payload = new { keyHandle, algorithm, plaintext };
 
             var json = await SendRequestAsync(payload, ENCRYPT_ENDPOINT, ct);
@@ -61,8 +70,14 @@
 
         private async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
-            var keyHandle = await GetKeyHandle(keyOptions, ct);
+            var ciphertextBytes = Convert.FromBase64String(ciphertext);
 
+            if (ciphertextBytes.Length > keyOptions.KeySize / 8)
+            {
+                throw new DataTooLargeException($"Data too large to decrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+            }
+
+            var keyHandle = await GetKeyHandle(keyOptions, ct);
             var payload = new{ keyHandle, algorithm, ciphertext };
 
             var json = await SendRequestAsync(payload, DECRYPT_ENDPOINT, ct);

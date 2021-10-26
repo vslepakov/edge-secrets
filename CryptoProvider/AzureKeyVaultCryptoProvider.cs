@@ -39,7 +39,7 @@
 
             if (plaintextBytes.Length + RSA_OAEP_PADDING_SIZE_IN_BYTES > keyOptions.KeySize / 8)
             {
-                throw new DataTooLargeException($"Data too large to encrypt using RSA-OAEP with the key size {keyOptions.KeySize}");
+                throw new DataTooLargeException($"Data too large to encrypt using {EncryptionAlgorithm.RsaOaep} with the key size {keyOptions.KeySize}");
             }
 
             var cryptographyClient = new CryptographyClient(new Uri(keyOptions.KeyId), new EnvironmentCredential());
@@ -54,7 +54,7 @@
 
             if (ciphertextBytes.Length > keyOptions.KeySize / 8)
             {
-                throw new DataTooLargeException($"Data too large to decrypt using RSA-OAEP with the key size {keyOptions.KeySize}");
+                throw new DataTooLargeException($"Data too large to decrypt using {EncryptionAlgorithm.RsaOaep} with the key size {keyOptions.KeySize}");
             }
 
             var cryptographyClient = new CryptographyClient(new Uri(keyOptions.KeyId), new EnvironmentCredential());
