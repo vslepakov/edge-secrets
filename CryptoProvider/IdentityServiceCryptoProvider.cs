@@ -33,8 +33,8 @@
         {
             return keyOptions.KeyType switch
             {
-                KeyType.RSA => InternalEncryptAsync(plaintext, keyOptions, ASYMMETRIC_ALGORITHM, ct),
-                KeyType.Symmetric => InternalEncryptAsync(plaintext, keyOptions, SYMMETRIC_ALGORITHM, ct),
+                KeyType.RSA => InternalEncryptAsync(plaintext, keyOptions, ct),
+                KeyType.Symmetric => InternalEncryptAsync(plaintext, keyOptions, ct),
                 KeyType.ECC => throw new NotImplementedException(),
                 _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
             };
@@ -44,14 +44,14 @@
         {
             return keyOptions.KeyType switch
             {
-                KeyType.RSA => InternalDecryptAsync(ciphertext, keyOptions, ASYMMETRIC_ALGORITHM, ct),
-                KeyType.Symmetric => InternalDecryptAsync(ciphertext, keyOptions, SYMMETRIC_ALGORITHM, ct),
+                KeyType.RSA => InternalDecryptAsync(ciphertext, keyOptions, ct),
+                KeyType.Symmetric => InternalDecryptAsync(ciphertext, keyOptions, ct),
                 KeyType.ECC => throw new NotImplementedException(),
                 _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
             };
         }
 
-        private async Task<string> InternalEncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
+        private async Task<string> InternalEncryptAsync(string plaintext, KeyOptions keyOptions, CancellationToken ct = default)
         {
             var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
             string keyHandle;
@@ -65,7 +65,7 @@
                 }
 
                 keyHandle = await GetKeyHandle(keyOptions, GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, ct);
-                payload = new { keyHandle, algorithm, plaintext = Convert.ToBase64String(plaintextBytes) };
+                payload = new { keyHandle, algorithm = ASYMMETRIC_ALGORITHM, plaintext = Convert.ToBase64String(plaintextBytes) };
             }
             else if (keyOptions.KeyType == KeyType.Symmetric)
             {
@@ -73,7 +73,7 @@
                 payload = new
                 {
                     keyHandle,
-                    algorithm,
+                    algorithm = SYMMETRIC_ALGORITHM,
                     plaintext = Convert.ToBase64String(plaintextBytes),
                     parameters = new
                     {
@@ -91,7 +91,7 @@
             return JObject.Parse(json)["ciphertext"].ToString();
         }
 
-        private async Task<string> InternalDecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
+        private async Task<string> InternalDecryptAsync(string ciphertext, KeyOptions keyOptions, CancellationToken ct = default)
         {
             var ciphertextBytes = Convert.FromBase64String(ciphertext);
             string keyHandle;
@@ -105,7 +105,7 @@
                 }
 
                 keyHandle = await GetKeyHandle(keyOptions, GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, ct);
-                payload = new { keyHandle, algorithm, ciphertext };
+                payload = new { keyHandle, algorithm = ASYMMETRIC_ALGORITHM, ciphertext };
             }
             else if (keyOptions.KeyType == KeyType.Symmetric)
             {
@@ -113,7 +113,7 @@
                 payload = new
                 {
                     keyHandle,
-                    algorithm,
+                    algorithm = SYMMETRIC_ALGORITHM,
                     ciphertext = Convert.ToBase64String(ciphertextBytes),
                     parameters = new
                     {
