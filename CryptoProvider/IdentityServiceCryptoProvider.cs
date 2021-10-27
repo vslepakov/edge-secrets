@@ -7,6 +7,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using EdgeSecrets.CryptoProvider.Exceptions;
+    using global::CryptoProvider.Util;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -76,8 +77,8 @@
                     plaintext = Convert.ToBase64String(plaintextBytes),
                     parameters = new
                     {
-                        iv = "TEST",
-                        aad = "TEST"
+                        iv = "TEST".Base64Encode(),
+                        aad = "TEST".Base64Encode()
                     }
                 };
             }
@@ -116,8 +117,8 @@
                     ciphertext = Convert.ToBase64String(ciphertextBytes),
                     parameters = new
                     {
-                        iv = "TEST",
-                        aad = "TEST"
+                        iv = "TEST".Base64Encode(),
+                        aad = "TEST".Base64Decode()
                     }
                 };
             }
@@ -129,8 +130,7 @@
             var json = await SendRequestAsync(payload, DECRYPT_ENDPOINT, ct);
             var plaintextAsBase64 = JObject.Parse(json)["plaintext"].ToString();
 
-            var plaintextAsBase64EncodedBytes = Convert.FromBase64String(plaintextAsBase64);
-            return Encoding.UTF8.GetString(plaintextAsBase64EncodedBytes);
+            return plaintextAsBase64.Base64Decode();
         }
 
         private async Task<string> GetKeyHandle(KeyOptions keyOptions, string ednpoint, CancellationToken ct = default)
