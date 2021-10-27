@@ -33,8 +33,8 @@
         {
             return keyOptions.KeyType switch
             {
-                KeyType.RSA => EncryptAsync(plaintext, keyOptions, ASYMMETRIC_ALGORITHM, ct),
-                KeyType.Symmetric => EncryptAsync(plaintext, keyOptions, SYMMETRIC_ALGORITHM, ct),
+                KeyType.RSA => InternalEncryptAsync(plaintext, keyOptions, ASYMMETRIC_ALGORITHM, ct),
+                KeyType.Symmetric => InternalEncryptAsync(plaintext, keyOptions, SYMMETRIC_ALGORITHM, ct),
                 KeyType.ECC => throw new NotImplementedException(),
                 _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
             };
@@ -44,14 +44,14 @@
         {
             return keyOptions.KeyType switch
             {
-                KeyType.RSA => DecryptAsync(ciphertext, keyOptions, ASYMMETRIC_ALGORITHM, ct),
-                KeyType.Symmetric => DecryptAsync(ciphertext, keyOptions, SYMMETRIC_ALGORITHM, ct),
+                KeyType.RSA => InternalDecryptAsync(ciphertext, keyOptions, ASYMMETRIC_ALGORITHM, ct),
+                KeyType.Symmetric => InternalDecryptAsync(ciphertext, keyOptions, SYMMETRIC_ALGORITHM, ct),
                 KeyType.ECC => throw new NotImplementedException(),
                 _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
             };
         }
 
-        private async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
+        private async Task<string> InternalEncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
             var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
             string keyHandle;
@@ -91,7 +91,7 @@
             return JObject.Parse(json)["ciphertext"].ToString();
         }
 
-        private async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
+        private async Task<string> InternalDecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
             var ciphertextBytes = Convert.FromBase64String(ciphertext);
             string keyHandle;
