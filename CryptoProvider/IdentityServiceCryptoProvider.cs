@@ -53,8 +53,8 @@
         private async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
             var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
-            string keyHandle = null;
-            object payload = null;
+            string keyHandle;
+            object payload;
 
             if (keyOptions.KeyType == KeyType.RSA)
             {
@@ -93,8 +93,8 @@
         private async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
             var ciphertextBytes = Convert.FromBase64String(ciphertext);
-            string keyHandle = null;
-            object payload = null;
+            string keyHandle;
+            object payload;
 
             if (keyOptions.KeyType == KeyType.RSA)
             {
@@ -113,7 +113,7 @@
                 {
                     keyHandle,
                     algorithm,
-                    plaintext = Convert.ToBase64String(plaintextBytes),
+                    ciphertext = Convert.ToBase64String(ciphertextBytes),
                     parameters = new
                     {
                         iv = "TEST",
@@ -148,11 +148,6 @@
 
             var response = await _httpClient.SendAsync(request, ct);
             return await response.Content.ReadAsStringAsync(ct);
-        }
-
-        private void CreateSymmetricPayload()
-        {
-            //TODO
         }
     }
 }
