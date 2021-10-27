@@ -53,6 +53,8 @@
         private async Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
             var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
+            string keyHandle = null;
+            object payload = null;
 
             if (keyOptions.KeyType == KeyType.RSA)
             {
@@ -60,20 +62,39 @@
                 {
                     throw new DataTooLargeException($"Data too large to encrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
                 }
+
+                keyHandle = await GetKeyHandle(keyOptions, GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, ct);
+                payload = new { keyHandle, algorithm, plaintext = Convert.ToBase64String(plaintextBytes) };
+            }
+            else if (keyOptions.KeyType == KeyType.Symmetric)
+            {
+                keyHandle = await GetKeyHandle(keyOptions, GET_SYMMETRIC_KEYHANDLE_ENDPOINT, ct);
+                payload = new
+                {
+                    keyHandle,
+                    algorithm,
+                    plaintext = Convert.ToBase64String(plaintextBytes),
+                    parameters = new
+                    {
+                        iv = "TEST",
+                        aad = "TEST"
+                    }
+                };
+            }
+            else
+            {
+                throw new ArgumentException($"Unsupported KeyType {keyOptions.KeyType}");
             }
 
-            var keyHandle = await GetKeyHandle(keyOptions, ct);
-            var payload = new { keyHandle, algorithm, plaintext = Convert.ToBase64String(plaintextBytes) };
-
             var json = await SendRequestAsync(payload, ENCRYPT_ENDPOINT, ct);
-            var ciphertextAsBase64 = JObject.Parse(json)["ciphertext"].ToString();
-
-            return ciphertextAsBase64;
+            return JObject.Parse(json)["ciphertext"].ToString();
         }
 
         private async Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, string algorithm, CancellationToken ct = default)
         {
             var ciphertextBytes = Convert.FromBase64String(ciphertext);
+            string keyHandle = null;
+            object payload = null;
 
             if (keyOptions.KeyType == KeyType.RSA)
             {
@@ -81,10 +102,29 @@
                 {
                     throw new DataTooLargeException($"Data too large to decrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
                 }
-            }
 
-            var keyHandle = await GetKeyHandle(keyOptions, ct);
-            var payload = new { keyHandle, algorithm, ciphertext };
+                keyHandle = await GetKeyHandle(keyOptions, GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, ct);
+                payload = new { keyHandle, algorithm, ciphertext };
+            }
+            else if (keyOptions.KeyType == KeyType.Symmetric)
+            {
+                keyHandle = await GetKeyHandle(keyOptions, GET_SYMMETRIC_KEYHANDLE_ENDPOINT, ct);
+                payload = new
+                {
+                    keyHandle,
+                    algorithm,
+                    plaintext = Convert.ToBase64String(plaintextBytes),
+                    parameters = new
+                    {
+                        iv = "TEST",
+                        aad = "TEST"
+                    }
+                };
+            }
+            else
+            {
+                throw new ArgumentException($"Unsupported KeyType {keyOptions.KeyType}");
+            }
 
             var json = await SendRequestAsync(payload, DECRYPT_ENDPOINT, ct);
             var plaintextAsBase64 = JObject.Parse(json)["plaintext"].ToString();
@@ -93,16 +133,11 @@
             return Encoding.UTF8.GetString(plaintextAsBase64EncodedBytes);
         }
 
-        private async Task<string> GetKeyHandle(KeyOptions keyOptions, CancellationToken ct = default)
+        private async Task<string> GetKeyHandle(KeyOptions keyOptions, string ednpoint, CancellationToken ct = default)
         {
-            var response = keyOptions.KeyType == KeyType.RSA
-                ? await _httpClient.GetAsync(string.Format(GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, keyOptions.KeyId), ct)
-                : await _httpClient.GetAsync(string.Format(GET_SYMMETRIC_KEYHANDLE_ENDPOINT, keyOptions.KeyId), ct);
-
+            var response = await _httpClient.GetAsync(string.Format(ednpoint, keyOptions.KeyId), ct);
             var json = await response.Content.ReadAsStringAsync(ct);
-            var keyHandle = JObject.Parse(json)["keyHandle"].ToString();
-
-            return keyHandle;
+            return JObject.Parse(json)["keyHandle"].ToString();
         }
 
         private async Task<string> SendRequestAsync(object payload, string endpoint, CancellationToken ct = default)
@@ -113,6 +148,11 @@
 
             var response = await _httpClient.SendAsync(request, ct);
             return await response.Content.ReadAsStringAsync(ct);
+        }
+
+        private void CreateSymmetricPayload()
+        {
+            //TODO
         }
     }
 }
