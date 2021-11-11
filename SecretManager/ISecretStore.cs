@@ -4,8 +4,8 @@ namespace EdgeSecrets.SecretManager
 
     public interface ISecretStore
     {
-        Task<string> GetSecretAsync(string key);
+        Task<Secret> GetSecretAsync(string name);
 
-        Task SetSecretAsync(string key, string value);
+        Task SetSecretAsync(string name, Secret secret);
     }
 }

@@ -20,7 +20,7 @@
             };
 
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
-            ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
+            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
             Console.WriteLine($"EdgeSecret test using Crypte Provider {cryptoProvider}");
 

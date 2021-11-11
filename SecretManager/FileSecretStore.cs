@@ -14,15 +14,15 @@ namespace EdgeSecrets.SecretManager
             _fileName = fileName;
         }
 
-        public async Task<string> GetSecretAsync(string key)
+        public async Task<Secret> GetSecretAsync(string name)
         {
             if (File.Exists(_fileName))
             {
-                IDictionary<string, string> secrets;
+                IDictionary<string, Secret> secrets;
                 using FileStream openStream = File.OpenRead(_fileName);
-                secrets = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(openStream);
+                secrets = await JsonSerializer.DeserializeAsync<Dictionary<string, Secret>>(openStream);
 
-                if (secrets.TryGetValue(key, out string value))
+                if (secrets.TryGetValue(name, out Secret value))
                 {
                     return value;
                 }
@@ -30,17 +30,17 @@ namespace EdgeSecrets.SecretManager
             return null;
         }
 
-        public async Task SetSecretAsync(string key, string value)
+        public async Task SetSecretAsync(string key, Secret value)
         {
-            IDictionary<string, string> secrets;
+            IDictionary<string, Secret> secrets;
             if (File.Exists(_fileName))
             {
                 using FileStream openStream = File.OpenRead(_fileName);
-                secrets = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(openStream);
+                secrets = await JsonSerializer.DeserializeAsync<Dictionary<string, Secret>>(openStream);
             }
             else
             {
-                secrets = new Dictionary<string, string>();
+                secrets = new Dictionary<string, Secret>();
             }
 
             secrets[key] = value;

@@ -16,13 +16,13 @@
             var cryptoProvider = new TestCryptoProvider();
 
             ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
-            ISecretStore secretStore = new InMemoryCacheSecretStore(fileSecretStore);
+            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, new KeyOptions(), secretStore);
 
             // Act
             string key = "testKey";
-            await manager.SetSecretAsync(key, PLAINTEXT);
-            string value = await manager.GetSecretAsync(key);
+            await manager.SetSecretValueAsync(key, PLAINTEXT);
+            string value = await manager.GetSecretValueAsync(key);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -48,13 +48,13 @@
             };
 
             var fileSecretStore = new FileSecretStore("secrets.json");
-            var secretStore = new InMemoryCacheSecretStore(fileSecretStore);
+            var secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
 
             // Act
             var key = "testKey";
-            await manager.SetSecretAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretAsync(key);
+            await manager.SetSecretValueAsync(key, PLAINTEXT);
+            var value = await manager.GetSecretValueAsync(key);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -81,13 +81,13 @@
             };
 
             var fileSecretStore = new FileSecretStore("secrets.json");
-            var secretStore = new InMemoryCacheSecretStore(fileSecretStore);
+            var secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
 
             // Act
             var key = "testKey";
-            await manager.SetSecretAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretAsync(key);
+            await manager.SetSecretValueAsync(key, PLAINTEXT);
+            var value = await manager.GetSecretValueAsync(key);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -113,13 +113,13 @@
             };
 
             var fileSecretStore = new FileSecretStore("secrets.json");
-            var secretStore = new InMemoryCacheSecretStore(fileSecretStore);
+            var secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
 
             // Act
             var key = "testKey";
-            await manager.SetSecretAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretAsync(key);
+            await manager.SetSecretValueAsync(key, PLAINTEXT);
+            var value = await manager.GetSecretValueAsync(key);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
