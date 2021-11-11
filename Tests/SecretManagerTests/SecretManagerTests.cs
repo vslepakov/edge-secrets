@@ -21,8 +21,8 @@
 
             // Act
             string key = "testKey";
-            await manager.SetSecretAsync(key, PLAINTEXT);
-            string value = await manager.GetSecretAsync(key);
+            await manager.SetSecretValueAsync(key, PLAINTEXT);
+            string value = await manager.GetSecretValueAsync(key);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -51,8 +51,8 @@
 
             // Act
             string key = "testKey";
-            await manager.SetSecretAsync(key, PLAINTEXT);
-            string value = await manager.GetSecretAsync(key);
+            await manager.SetSecretValueAsync(key, PLAINTEXT);
+            string value = await manager.GetSecretValueAsync(key);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));

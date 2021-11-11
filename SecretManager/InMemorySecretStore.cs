@@ -6,7 +6,7 @@ namespace EdgeSecrets.SecretManager
     public class InMemorySecretStore : ISecretStore
     {
         private ISecretStore _internalSecretStore;
-        private IDictionary<string, string> _cachedSecrets = new Dictionary<string, string>();
+        private IDictionary<string, Secret> _cachedSecrets = new Dictionary<string, Secret>();
 
 
         public InMemorySecretStore(ISecretStore secretStore = null)
@@ -14,27 +14,27 @@ namespace EdgeSecrets.SecretManager
             _internalSecretStore = secretStore;
         }
 
-        public async Task<string> GetSecretAsync(string key)
+        public async Task<Secret> GetSecretAsync(string name)
         {
-            string value = null;
-            if (!_cachedSecrets.TryGetValue(key, out value))
+            Secret value = null;
+            if (!_cachedSecrets.TryGetValue(name, out value))
             {
                 if (_internalSecretStore != null)
                 {
-                    value = await _internalSecretStore.GetSecretAsync(key);
-                    _cachedSecrets[key] = value;
+                    value = await _internalSecretStore.GetSecretAsync(name);
+                    _cachedSecrets[name] = value;
                 }
             }
             return value;
         }
 
-        public async Task SetSecretAsync(string key, string value)
+        public async Task SetSecretAsync(string name, Secret value)
         {
             if (_internalSecretStore != null)
             {
-                await _internalSecretStore.SetSecretAsync(key, value);
+                await _internalSecretStore.SetSecretAsync(name, value);
             }
-            _cachedSecrets[key] = value;
+            _cachedSecrets[name] = value;
         }
     }
 }
