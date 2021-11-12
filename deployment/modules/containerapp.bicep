@@ -1,18 +1,23 @@
 param location string
-param prefix string
+param name string
 param containerAppEnvironmentId string
 
 // Container Image ref
 param containerImage string
+param envVars array = []
 
 // Networking
 param useExternalIngress bool = false
 param containerPort int
 
-param envVars array = []
+// TODO use in Dapr to KeyVault
+param tenantId string
+param applicationId string
+@secure()
+param applicationSecret string
 
 resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
-  name: '${prefix}-${uniqueString(resourceGroup().id)}-containerapp'
+  name: name
   kind: 'containerapp'
   location: location
   properties: {
@@ -35,11 +40,11 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
       containers: [
         {
           image: containerImage
-          name: '${prefix}-app'
+          name: name
           env: envVars
           resources: {
             cpu: 1
-            memory: '250Mb'
+            memory: '2Gi'
           }
         }
       ]
@@ -49,3 +54,5 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
     }
   }
 }
+
+output fqdn string = containerApp.properties.configuration.ingress.fqdn

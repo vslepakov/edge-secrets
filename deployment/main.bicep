@@ -4,9 +4,62 @@ param location string = resourceGroup().location
 param containerImage string
 param containerPort int
 
-//resource iotHub 'Microsoft.Devices/IotHubs@2021-07-01' = {}
+param tenantId string
+param objectId string
+param applicationId string
 
-//resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {}
+@secure()
+param applicationSecret string
+
+resource iotHub 'Microsoft.Devices/IotHubs@2021-07-01' = {
+  name: '${prefix}-${uniqueString(resourceGroup().id)}-iothub'
+  location: location
+  sku: {
+    capacity: 1
+    name: 'S1'
+  }
+  properties: {
+    routing: {
+      routes: [
+        {
+          condition: 'true' // TODO only route specific messages for secret requests
+          endpointNames: [
+            'eventgrid'
+          ]
+          isEnabled: true
+          name: 'RouteToEventGrid'
+          source: 'DeviceMessages'
+        }
+      ]
+    }
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
+  name: '${prefix}-keyvault'
+  location: location
+  properties: {
+    accessPolicies: [
+      {
+        applicationId: applicationId
+        objectId: objectId
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+          ]
+        }
+        tenantId: tenantId
+      }
+    ]
+    createMode: 'default'
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: tenantId
+  }
+}
 
 resource loganalyticsWs 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
   name: '${prefix}-${uniqueString(resourceGroup().id)}-loganalyticsws'
@@ -41,18 +94,22 @@ resource k8sEnv 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
 module containerApp 'modules/containerapp.bicep' = {
   name: 'containerapp'
   params: {
-    prefix: prefix
+    name: 'secret-manager-webapp'
     location: location
     containerImage: containerImage
     containerPort: containerPort
+    tenantId: tenantId
+    applicationId: applicationId
+    applicationSecret: applicationSecret
     envVars: [
       {
-        name: 'TEST_VAR_NAME'
-        value: 'TEST_VAR_VALUE'
+        name: 'TEST_ENV'
+        value: 'TEST_VALUE'
       }
     ]
     useExternalIngress: true
     containerAppEnvironmentId: k8sEnv.id
   }
 }
+
 output fqdn string = containerApp.outputs.fqdn
