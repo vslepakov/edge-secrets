@@ -1,0 +1,280 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "13904367798379082960"
+    }
+  },
+  "parameters": {
+    "prefix": {
+      "type": "string",
+      "defaultValue": "secret-manager"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "containerImage": {
+      "type": "string"
+    },
+    "containerPort": {
+      "type": "int"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "objectId": {
+      "type": "string"
+    },
+    "applicationId": {
+      "type": "string"
+    },
+    "applicationSecret": {
+      "type": "secureString"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Devices/IotHubs",
+      "apiVersion": "2021-07-01",
+      "name": "[format('{0}-{1}-iothub', parameters('prefix'), uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": 1,
+        "name": "S1"
+      },
+      "properties": {
+        "routing": {
+          "routes": [
+            {
+              "condition": "true",
+              "endpointNames": [
+                "eventgrid"
+              ],
+              "isEnabled": true,
+              "name": "RouteToEventGrid",
+              "source": "DeviceMessages"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[format('{0}-{1}-keyvault', parameters('prefix'), uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accessPolicies": [
+          {
+            "applicationId": "[parameters('applicationId')]",
+            "objectId": "[parameters('objectId')]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "list"
+              ]
+            },
+            "tenantId": "[parameters('tenantId')]"
+          }
+        ],
+        "createMode": "default",
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[parameters('tenantId')]"
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[format('{0}-{1}-loganalyticsws', parameters('prefix'), uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "retentionInDays": 30,
+        "features": {
+          "searchVersion": 1
+        },
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/kubeEnvironments",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}-{1}-k8senv', parameters('prefix'), uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "type": "managed",
+        "internalLoadBalancerEnabled": false,
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-{1}-loganalyticsws', parameters('prefix'), uniqueString(resourceGroup().id)))).customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-{1}-loganalyticsws', parameters('prefix'), uniqueString(resourceGroup().id))), '2020-03-01-preview').primarySharedKey]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-{1}-loganalyticsws', parameters('prefix'), uniqueString(resourceGroup().id)))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "containerapp",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "secret-manager-webapp"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "containerImage": {
+            "value": "[parameters('containerImage')]"
+          },
+          "containerPort": {
+            "value": "[parameters('containerPort')]"
+          },
+          "tenantId": {
+            "value": "[parameters('tenantId')]"
+          },
+          "applicationId": {
+            "value": "[parameters('applicationId')]"
+          },
+          "applicationSecret": {
+            "value": "[parameters('applicationSecret')]"
+          },
+          "envVars": {
+            "value": [
+              {
+                "name": "TEST_ENV",
+                "value": "TEST_VALUE"
+              }
+            ]
+          },
+          "useExternalIngress": {
+            "value": true
+          },
+          "containerAppEnvironmentId": {
+            "value": "[resourceId('Microsoft.Web/kubeEnvironments', format('{0}-{1}-k8senv', parameters('prefix'), uniqueString(resourceGroup().id)))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1008.15138",
+              "templateHash": "10874503202563571854"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "containerAppEnvironmentId": {
+              "type": "string"
+            },
+            "containerImage": {
+              "type": "string"
+            },
+            "envVars": {
+              "type": "array",
+              "defaultValue": []
+            },
+            "useExternalIngress": {
+              "type": "bool",
+              "defaultValue": false
+            },
+            "containerPort": {
+              "type": "int"
+            },
+            "tenantId": {
+              "type": "string"
+            },
+            "applicationId": {
+              "type": "string"
+            },
+            "applicationSecret": {
+              "type": "secureString"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Web/containerApps",
+              "apiVersion": "2021-03-01",
+              "name": "[parameters('name')]",
+              "kind": "containerapp",
+              "location": "[parameters('location')]",
+              "properties": {
+                "kubeEnvironmentId": "[parameters('containerAppEnvironmentId')]",
+                "configuration": {
+                  "activeRevisionsMode": "single",
+                  "secrets": [
+                    {
+                      "name": "container-registry-password",
+                      "value": "todo"
+                    }
+                  ],
+                  "registries": [],
+                  "ingress": {
+                    "external": "[parameters('useExternalIngress')]",
+                    "targetPort": "[parameters('containerPort')]"
+                  }
+                },
+                "template": {
+                  "containers": [
+                    {
+                      "image": "[parameters('containerImage')]",
+                      "name": "[parameters('name')]",
+                      "env": "[parameters('envVars')]",
+                      "resources": {
+                        "cpu": 1,
+                        "memory": "2Gi"
+                      }
+                    }
+                  ],
+                  "scale": {
+                    "minReplicas": 1
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "fqdn": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/containerApps', parameters('name'))).configuration.ingress.fqdn]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/kubeEnvironments', format('{0}-{1}-k8senv', parameters('prefix'), uniqueString(resourceGroup().id)))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "fqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'containerapp'), '2020-06-01').outputs.fqdn.value]"
+    }
+  }
+}
