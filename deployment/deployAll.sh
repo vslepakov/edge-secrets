@@ -42,6 +42,13 @@ else
   applicationSecret=$6
 fi
 
+if [ -z "$7" ]; then
+  echo "No webHookApiKey provided"
+  exit 7
+else
+  webHookApiKey=$7
+fi
+
 getRandomString() {
   sed "s/[^a-zA-Z0-9]//g" <<< $(openssl rand -base64 4) | tr '[:upper:]' '[:lower:]'
 }
@@ -57,7 +64,8 @@ az deployment group create -n ${deploymentName} -g ${rg} \
      tenantId=${tenantId} \
      objectId=${objectId} \
      applicationId=${applicationId} \
-     applicationSecret=${applicationSecret}
+     applicationSecret=${applicationSecret} \
+     webHookApiKey=${webHookApiKey}
 
 fqdn=$(az deployment group show -g ${rg} --query properties.outputs.fqdn.value \
   -n ${deploymentName} -o tsv)

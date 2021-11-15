@@ -1,4 +1,3 @@
-param prefix string = 'secret-manager'
 param location string = resourceGroup().location
 
 param containerImage string
@@ -11,32 +10,12 @@ param applicationId string
 @secure()
 param applicationSecret string
 
-resource iotHub 'Microsoft.Devices/IotHubs@2021-07-01' = {
-  name: '${prefix}-${uniqueString(resourceGroup().id)}-iothub'
-  location: location
-  sku: {
-    capacity: 1
-    name: 'S1'
-  }
-  properties: {
-    routing: {
-      routes: [
-        {
-          condition: 'true' // TODO only route specific messages for secret requests
-          endpointNames: [
-            'eventgrid'
-          ]
-          isEnabled: true
-          name: 'RouteToEventGrid'
-          source: 'DeviceMessages'
-        }
-      ]
-    }
-  }
-}
+// Securing access using an API Key for now. Later use AAD
+@secure()
+param webHookApiKey string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
-  name: '${prefix}-keyvault'
+  name: 'a${uniqueString(resourceGroup().id)}-kv'
   location: location
   properties: {
     accessPolicies: [
@@ -53,6 +32,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       }
     ]
     createMode: 'default'
+    enableSoftDelete: false
     sku: {
       family: 'A'
       name: 'standard'
@@ -62,7 +42,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
 }
 
 resource loganalyticsWs 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
-  name: '${prefix}-${uniqueString(resourceGroup().id)}-loganalyticsws'
+  name: '${uniqueString(resourceGroup().id)}-loganalyticsws'
   location: location
   properties: any({
     retentionInDays: 30
@@ -76,7 +56,7 @@ resource loganalyticsWs 'Microsoft.OperationalInsights/workspaces@2020-03-01-pre
 }
 
 resource k8sEnv 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
-  name: '${prefix}-${uniqueString(resourceGroup().id)}-k8senv'
+  name: '${uniqueString(resourceGroup().id)}-k8senv'
   location: location
   properties: {
     type: 'managed'
@@ -103,12 +83,24 @@ module containerApp 'modules/containerapp.bicep' = {
     applicationSecret: applicationSecret
     envVars: [
       {
-        name: 'TEST_ENV'
-        value: 'TEST_VALUE'
+        name: 'API_KEY'
+        value: webHookApiKey
       }
     ]
     useExternalIngress: true
     containerAppEnvironmentId: k8sEnv.id
+  }
+}
+
+module iotHub 'modules/iothub_with_eventgrid_webhook.bicep' = {
+  name: 'iothub-with-eventgrid'
+  dependsOn: [
+    containerApp
+  ]
+  params: {
+    location: location
+    webHookApiKey: webHookApiKey
+    webHookUrl: 'https://${containerApp.outputs.fqdn}'
   }
 }
 

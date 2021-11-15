@@ -13,9 +13,11 @@ param containerPort int
 // TODO use in Dapr to KeyVault
 param tenantId string
 param applicationId string
+
 @secure()
 param applicationSecret string
 
+// TODO add Dapr
 resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
   name: name
   kind: 'containerapp'
