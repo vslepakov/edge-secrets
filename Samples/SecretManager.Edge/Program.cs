@@ -75,30 +75,16 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
 
                     //TO DO: pass over the Initialization Vector to WorkloadApiCryptoProvider
 					Console.WriteLine($"initialization vector '{INIT_VECTOR}'");
-                    
-                    kms = new KeyOptions 
-                    {
-                        KeyId = KEY_ID, 
-                        KeyType = KeyType.Symmetric,
-                        KeySize = 2048
-                    };
                     break;
 
                 case "azure-kv":
                     cryptoProvider = new AzureKeyVaultCryptoProvider();
-
-                    kms = new KeyOptions 
-                    {
-                        KeyId = KEY_ID, 
-                        KeyType = KeyType.RSA,
-                        KeySize = 2048
-                    };
                     break;
             }; 
 
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            var manager = new SecretManagerClient(cryptoProvider, KEY_ID, secretStore);
             Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
 
             string keyA = "test";

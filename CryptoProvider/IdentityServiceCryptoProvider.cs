@@ -6,7 +6,6 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using EdgeSecrets.CryptoProvider.Exceptions;
     using global::CryptoProvider.Util;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -15,12 +14,9 @@
     {
         private const string ENCRYPT_ENDPOINT = "http://keyd.sock/encrypt?api-version=2020-09-01";
         private const string DECRYPT_ENDPOINT = "http://keyd.sock/decrypt?api-version=2020-09-01";
-        private const string GET_ASYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/keypair/{0}?api-version=2020-09-01";
-        private const string GET_SYMMETRIC_KEYHANDLE_ENDPOINT = "http://keyd.sock/key/{0}?api-version=2020-09-01";
+        private const string GET_KEYHANDLE_ENDPOINT = "http://keyd.sock/key/{0}?api-version=2020-09-01";
         private const string KEYD_SOCKET = "/run/aziot/keyd.sock";
         private const string SYMMETRIC_ALGORITHM = "AEAD";
-        private const string ASYMMETRIC_ALGORITHM = "RSA-PKCS1";
-        private const int RSA_PKCS1_PADDING_SIZE_IN_BYTES = 11;
 
         private readonly HttpClient _httpClient;
 
@@ -29,103 +25,45 @@
             _httpClient = Util.HttpClientHelper.GetUnixDomainSocketHttpClient(KEYD_SOCKET, CancellationToken.None);
         }
 
-        public Task<string> EncryptAsync(string plaintext, KeyOptions keyOptions, CancellationToken ct = default)
-        {
-            return keyOptions.KeyType switch
-            {
-                KeyType.RSA => InternalEncryptAsync(plaintext, keyOptions, ct),
-                KeyType.Symmetric => InternalEncryptAsync(plaintext, keyOptions, ct),
-                KeyType.ECC => throw new NotImplementedException(),
-                _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
-            };
-        }
-
-        public Task<string> DecryptAsync(string ciphertext, KeyOptions keyOptions, CancellationToken ct = default)
-        {
-            return keyOptions.KeyType switch
-            {
-                KeyType.RSA => InternalDecryptAsync(ciphertext, keyOptions, ct),
-                KeyType.Symmetric => InternalDecryptAsync(ciphertext, keyOptions, ct),
-                KeyType.ECC => throw new NotImplementedException(),
-                _ => throw new ArgumentException($"{keyOptions.KeyType} is not supported by this provider"),
-            };
-        }
-
-        private async Task<string> InternalEncryptAsync(string plaintext, KeyOptions keyOptions, CancellationToken ct = default)
+        public async Task<string> EncryptAsync(string plaintext, string keyId, CancellationToken ct = default)
         {
             var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
-            string keyHandle;
-            object payload;
 
-            if (keyOptions.KeyType == KeyType.RSA)
+            var keyHandle = await GetKeyHandle(keyId, ct);
+
+            var payload = new
             {
-                if (plaintextBytes.Length + RSA_PKCS1_PADDING_SIZE_IN_BYTES > keyOptions.KeySize / 8)
+                keyHandle,
+                algorithm = SYMMETRIC_ALGORITHM,
+                plaintext = Convert.ToBase64String(plaintextBytes),
+                parameters = new
                 {
-                    throw new DataTooLargeException($"Data too large to encrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+                    iv = "TEST".Base64Encode(),
+                    aad = "TEST".Base64Encode()
                 }
-
-                keyHandle = await GetKeyHandle(keyOptions, GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, ct);
-                payload = new { keyHandle, algorithm = ASYMMETRIC_ALGORITHM, plaintext = Convert.ToBase64String(plaintextBytes) };
-            }
-            else if (keyOptions.KeyType == KeyType.Symmetric)
-            {
-                keyHandle = await GetKeyHandle(keyOptions, GET_SYMMETRIC_KEYHANDLE_ENDPOINT, ct);
-                payload = new
-                {
-                    keyHandle,
-                    algorithm = SYMMETRIC_ALGORITHM,
-                    plaintext = Convert.ToBase64String(plaintextBytes),
-                    parameters = new
-                    {
-                        iv = "TEST".Base64Encode(),
-                        aad = "TEST".Base64Encode()
-                    }
-                };
-            }
-            else
-            {
-                throw new ArgumentException($"Unsupported KeyType {keyOptions.KeyType}");
-            }
+            };
 
             var json = await SendRequestAsync(payload, ENCRYPT_ENDPOINT, ct);
             return JObject.Parse(json)["ciphertext"].ToString();
         }
 
-        private async Task<string> InternalDecryptAsync(string ciphertext, KeyOptions keyOptions, CancellationToken ct = default)
+        public async Task<string> DecryptAsync(string ciphertext, string keyId, CancellationToken ct = default)
         {
             var ciphertextBytes = Convert.FromBase64String(ciphertext);
-            string keyHandle;
-            object payload;
 
-            if (keyOptions.KeyType == KeyType.RSA)
+            var keyHandle = await GetKeyHandle(keyId, ct);
+
+            var payload = new
             {
-                if (ciphertextBytes.Length > keyOptions.KeySize / 8)
+                keyHandle,
+                algorithm = SYMMETRIC_ALGORITHM,
+                ciphertext = Convert.ToBase64String(ciphertextBytes),
+                parameters = new
                 {
-                    throw new DataTooLargeException($"Data too large to decrypt using {ASYMMETRIC_ALGORITHM} with the key size {keyOptions.KeySize}");
+                    iv = "TEST".Base64Encode(),
+                    aad = "TEST".Base64Decode()
                 }
-
-                keyHandle = await GetKeyHandle(keyOptions, GET_ASYMMETRIC_KEYHANDLE_ENDPOINT, ct);
-                payload = new { keyHandle, algorithm = ASYMMETRIC_ALGORITHM, ciphertext };
-            }
-            else if (keyOptions.KeyType == KeyType.Symmetric)
-            {
-                keyHandle = await GetKeyHandle(keyOptions, GET_SYMMETRIC_KEYHANDLE_ENDPOINT, ct);
-                payload = new
-                {
-                    keyHandle,
-                    algorithm = SYMMETRIC_ALGORITHM,
-                    ciphertext = Convert.ToBase64String(ciphertextBytes),
-                    parameters = new
-                    {
-                        iv = "TEST".Base64Encode(),
-                        aad = "TEST".Base64Decode()
-                    }
-                };
-            }
-            else
-            {
-                throw new ArgumentException($"Unsupported KeyType {keyOptions.KeyType}");
-            }
+            };
 
             var json = await SendRequestAsync(payload, DECRYPT_ENDPOINT, ct);
             var plaintextAsBase64 = JObject.Parse(json)["plaintext"].ToString();
@@ -133,9 +71,9 @@
             return plaintextAsBase64.Base64Decode();
         }
 
-        private async Task<string> GetKeyHandle(KeyOptions keyOptions, string ednpoint, CancellationToken ct = default)
+        private async Task<string> GetKeyHandle(string keyId, CancellationToken ct = default)
         {
-            var response = await _httpClient.GetAsync(string.Format(ednpoint, keyOptions.KeyId), ct);
+            var response = await _httpClient.GetAsync(string.Format(GET_KEYHANDLE_ENDPOINT, keyId), ct);
             var json = await response.Content.ReadAsStringAsync(ct);
             return JObject.Parse(json)["keyHandle"].ToString();
         }

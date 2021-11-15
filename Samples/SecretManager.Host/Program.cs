@@ -12,16 +12,10 @@
             string KEY_ID = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
 
             var cryptoProvider = new AzureKeyVaultCryptoProvider();
-            var kms = new KeyOptions 
-            {
-                KeyId = KEY_ID, 
-                KeyType = KeyType.RSA,
-                KeySize = 2048
-            };
 
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            var manager = new SecretManagerClient(cryptoProvider, KEY_ID, secretStore);
             Console.WriteLine($"EdgeSecret test using Crypte Provider {cryptoProvider}");
 
             string keyA = "test";
