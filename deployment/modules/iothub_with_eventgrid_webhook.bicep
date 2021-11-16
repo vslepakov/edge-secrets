@@ -33,7 +33,7 @@ resource symbolicname 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-
         // Securing access using an API Key for now. Later use AAD.
         deliveryAttributeMappings: [
           {
-            name: 'API-KEY'
+            name: 'X-API-KEY'
             type: 'Static'
             properties: {
               value: webHookApiKey
