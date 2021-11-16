@@ -83,7 +83,7 @@ module containerApp 'modules/containerapp.bicep' = {
     applicationSecret: applicationSecret
     envVars: [
       {
-        name: 'API_KEY'
+        name: 'X-API-KEY'
         value: webHookApiKey
       }
     ]
@@ -100,7 +100,7 @@ module iotHub 'modules/iothub_with_eventgrid_webhook.bicep' = {
   params: {
     location: location
     webHookApiKey: webHookApiKey
-    webHookUrl: 'https://${containerApp.outputs.fqdn}'
+    webHookUrl: 'https://${containerApp.outputs.fqdn}/events'
   }
 }
 
