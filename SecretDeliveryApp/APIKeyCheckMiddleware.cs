@@ -17,7 +17,7 @@ internal class APIKeyCheckMiddleware
         if (httpContext.Request.Headers.TryGetValue(API_KEY_HEADER_NAME, out StringValues value))
         {
             var apiKey = value;
-            var validApiKey = "123456"; //Environment.GetEnvironmentVariable(API_KEY_HEADER_NAME);
+            var validApiKey = Environment.GetEnvironmentVariable(API_KEY_HEADER_NAME);
 
             if (validApiKey != null && apiKey == validApiKey)
             {
