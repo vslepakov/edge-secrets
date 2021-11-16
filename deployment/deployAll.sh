@@ -67,7 +67,4 @@ az deployment group create -n ${deploymentName} -g ${rg} \
      applicationSecret=${applicationSecret} \
      webHookApiKey=${webHookApiKey}
 
-fqdn=$(az deployment group show -g ${rg} --query properties.outputs.fqdn.value \
-  -n ${deploymentName} -o tsv)
-
-echo "Your app is deployed here: ${fqdn}"
+echo "Done!"
