@@ -74,7 +74,7 @@ resource k8sEnv 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
 module containerApp 'modules/containerapp.bicep' = {
   name: 'containerapp'
   params: {
-    name: 'secret-manager-webapp'
+    name: 'secret-delivery-app'
     location: location
     containerImage: containerImage
     containerPort: containerPort
