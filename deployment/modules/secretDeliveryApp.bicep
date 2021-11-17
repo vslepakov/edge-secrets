@@ -4,13 +4,8 @@ param containerAppEnvironmentId string
 
 // Container Image ref
 param containerImage string
-
-// Networking
-param useExternalIngress bool = false
 param containerPort int
-
 param keyVaultUrl string
-
 param tenantId string
 param applicationId string
 
@@ -45,7 +40,7 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
       ]
       registries: []
       ingress: {
-        external: useExternalIngress
+        external: true
         targetPort: containerPort
       }
     }

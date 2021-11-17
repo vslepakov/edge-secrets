@@ -57,7 +57,6 @@ module secretDeliveryApp 'modules/secretDeliveryApp.bicep' = {
     tenantId: tenantId
     applicationId: applicationId
     applicationSecret: applicationSecret
-    useExternalIngress: true
     containerAppEnvironmentId: k8senv.outputs.k8senvId
     webHookApiKey: webHookApiKey
     keyVaultUrl: 'https://${keyVault.name}${environment().suffixes.keyvaultDns}'
