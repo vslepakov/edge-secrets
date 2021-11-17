@@ -41,38 +41,15 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   }
 }
 
-resource loganalyticsWs 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
-  name: '${uniqueString(resourceGroup().id)}-loganalyticsws'
-  location: location
-  properties: any({
-    retentionInDays: 30
-    features: {
-      searchVersion: 1
-    }
-    sku: {
-      name: 'PerGB2018'
-    }
-  })
-}
-
-resource k8sEnv 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
-  name: '${uniqueString(resourceGroup().id)}-k8senv'
-  location: location
-  properties: {
-    type: 'managed'
-    internalLoadBalancerEnabled: false
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: loganalyticsWs.properties.customerId
-        sharedKey: loganalyticsWs.listKeys().primarySharedKey
-      }
-    }
+module k8senv 'modules/k8senv.bicep' = {
+  name: 'k8senv'
+  params: {
+    location: location
   }
 }
 
-module containerApp 'modules/containerapp.bicep' = {
-  name: 'containerapp'
+module secretDeliveryApp 'modules/secretDeliveryApp.bicep' = {
+  name: 'secretDeliveryApp'
   params: {
     name: 'secret-delivery-app'
     location: location
@@ -81,27 +58,22 @@ module containerApp 'modules/containerapp.bicep' = {
     tenantId: tenantId
     applicationId: applicationId
     applicationSecret: applicationSecret
-    envVars: [
-      {
-        name: 'X-API-KEY'
-        value: webHookApiKey
-      }
-    ]
     useExternalIngress: true
-    containerAppEnvironmentId: k8sEnv.id
+    containerAppEnvironmentId: k8senv.outputs.k8senvId
+    webHookApiKey: webHookApiKey
   }
 }
 
 module iotHub 'modules/iothub_with_eventgrid_webhook.bicep' = {
   name: 'iothub-with-eventgrid'
   dependsOn: [
-    containerApp
+    secretDeliveryApp
   ]
   params: {
     location: location
     webHookApiKey: webHookApiKey
-    webHookUrl: 'https://${containerApp.outputs.fqdn}/events'
+    webHookUrl: 'https://${secretDeliveryApp.outputs.fqdn}/events'
   }
 }
 
-output fqdn string = containerApp.outputs.fqdn
+output fqdn string = secretDeliveryApp.outputs.fqdn

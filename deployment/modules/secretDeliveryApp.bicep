@@ -4,18 +4,19 @@ param containerAppEnvironmentId string
 
 // Container Image ref
 param containerImage string
-param envVars array = []
 
 // Networking
 param useExternalIngress bool = false
 param containerPort int
 
-// TODO use in Dapr to KeyVault
 param tenantId string
 param applicationId string
 
 @secure()
 param applicationSecret string
+
+@secure()
+param webHookApiKey string
 
 // TODO add Dapr
 resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
@@ -28,8 +29,16 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
       activeRevisionsMode: 'single'
       secrets: [
         {
-          name: 'container-registry-password'
-          value: 'todo'
+          name: 'webhook-api-key'
+          value: webHookApiKey
+        }
+        {
+          name: 'application-clientid'
+          value: applicationId
+        }
+        {
+          name: 'application-client-secret'
+          value: applicationSecret
         }
       ]
       registries: []
@@ -43,7 +52,24 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
         {
           image: containerImage
           name: name
-          env: envVars
+          env: [
+            {
+              name: 'X-API-KEY'
+              secretref: 'webhook-api-key'
+            }
+            {
+              name: 'AZURE_CLIENT_ID'
+              secretref: 'application-clientid'
+            }
+            {
+              name: 'AZURE_CLIENT_SECRET'
+              secretref: 'application-client-secret'
+            }
+            {
+              name: 'AZURE_TENANT_ID'
+              value: tenantId
+            }
+          ]
           resources: {
             cpu: 1
             memory: '2Gi'
@@ -52,6 +78,16 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
       ]
       scale: {
         minReplicas: 1
+        rules: [
+          {
+            name: 'http-rule'
+            http: {
+              metadata: {
+                concurrentRequests: '50'
+              }
+            }
+          }
+        ]
       }
     }
   }
