@@ -1,5 +1,5 @@
-param location string
-param name string
+param location string = resourceGroup().location
+param name string = 'secret-delivery-app'
 param containerAppEnvironmentId string
 
 // Container Image ref
@@ -8,6 +8,8 @@ param containerImage string
 // Networking
 param useExternalIngress bool = false
 param containerPort int
+
+param keyVaultUrl string
 
 param tenantId string
 param applicationId string
@@ -68,6 +70,10 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
             {
               name: 'AZURE_TENANT_ID'
               value: tenantId
+            }
+            {
+              name: 'AZURE_KEYVAULT_URL'
+              value: keyVaultUrl
             }
           ]
           resources: {

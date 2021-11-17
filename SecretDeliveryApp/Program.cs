@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<SecretRequestProcessor>();
+builder.Services.AddScoped<ISecretProvider, AzureKeyVaultClient>();
 
 var app = builder.Build();
 
@@ -29,14 +31,13 @@ app.MapMethods("/events", new[] { "OPTIONS" }, (http) =>
 ); 
 
 // Handle events
-app.MapPost("/events", async (http) =>
+app.MapPost("/events", async (HttpContext http, SecretRequestProcessor processor) =>
 {
     string content = string.Empty;
 
     using (var readStream = new StreamReader(http.Request.Body))
     content = await readStream.ReadToEndAsync();
-    
-    var processor = new SecretRequestProcessor(app.Logger);
+
     await processor.ProcessAsync(content);
    
 });

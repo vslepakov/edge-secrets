@@ -20,7 +20,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   properties: {
     accessPolicies: [
       {
-        applicationId: applicationId
+        tenantId: tenantId
         objectId: objectId
         permissions: {
           secrets: [
@@ -28,7 +28,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
             'list'
           ]
         }
-        tenantId: tenantId
       }
     ]
     createMode: 'default'
@@ -61,6 +60,7 @@ module secretDeliveryApp 'modules/secretDeliveryApp.bicep' = {
     useExternalIngress: true
     containerAppEnvironmentId: k8senv.outputs.k8senvId
     webHookApiKey: webHookApiKey
+    keyVaultUrl: 'https://${keyVault.name}${environment().suffixes.keyvaultDns}'
   }
 }
 
