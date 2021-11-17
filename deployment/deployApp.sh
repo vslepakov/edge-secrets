@@ -42,13 +42,29 @@ else
   webHookApiKey=$6
 fi
 
+if [ -z "$7" ]; then
+  echo "No KeyVault URL provided"
+  exit 7
+else
+  keyVaultUrl=$7
+fi
+
+if [ -z "$8" ]; then
+  echo "No Container App Environment ID provided"
+  exit 8
+else
+  containerAppEnvironmentId=$8
+fi
+
 az deployment group create -n app-deployment -g ${rg} \
-  --template-file ./modules/containerapp.bicep \
+  --template-file ./modules/secretDeliveryApp.bicep \
   -p containerImage=${containerImage} \
-     containerPort=80
+     containerPort=80 \
+     containerAppEnvironmentId=${containerAppEnvironmentId} \
      tenantId=${tenantId} \
      applicationId=${applicationId} \
      applicationSecret=${applicationSecret} \
-     webHookApiKey=${webHookApiKey}
+     webHookApiKey=${webHookApiKey} \
+     keyVaultUrl=${keyVaultUrl}
 
 echo "DONE!"
