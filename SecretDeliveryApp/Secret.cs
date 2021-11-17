@@ -4,10 +4,12 @@ public record Secret(Uri Id, string Name, string Value, string Version, DateTime
 
 public record NullSecret : Secret
 {
+    private static NullSecret _instance = new(new Uri("http://localhost"), "", "", "", null, null);
+
     public NullSecret(Uri Id, string Name, string Value, string Version, DateTimeOffset? ExpiresOn, DateTimeOffset? NotBefore)
         : base(Id, Name, Value, Version, ExpiresOn, NotBefore)
     {
     }
 
-    public static NullSecret Instance => new(new Uri("http://localhost"), "", "", "", null, null);
+    public static NullSecret Instance => _instance;
 }
