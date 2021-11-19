@@ -38,10 +38,6 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
           value: applicationSecret
         }
         {
-          name: 'container-registry-username'
-          value: applicationId
-        }
-        {
           name: 'container-registry-password'
           value: applicationSecret
         }
@@ -49,7 +45,7 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
       registries: [
         {
           server: 'vislepakdemoacr.azurecr.io'
-          usernameSecretRef: 'container-registry-username'
+          username: applicationId
           passwordSecretRef: 'container-registry-password'
         }
       ]
