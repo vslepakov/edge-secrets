@@ -3,6 +3,7 @@ param name string = 'secret-delivery-app'
 param containerAppEnvironmentId string
 
 // Container Image ref
+param containerRegistry string
 param containerImage string
 param containerPort int
 param keyVaultUrl string
@@ -37,8 +38,18 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
           name: 'application-client-secret'
           value: applicationSecret
         }
+        {
+          name: 'container-registry-password'
+          value: applicationSecret
+        }
       ]
-      registries: []
+      registries: [
+        {
+          server: containerRegistry
+          username: applicationId
+          passwordSecretRef: 'container-registry-password'
+        }
+      ]
       ingress: {
         external: true
         targetPort: containerPort

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if [ -z "$1" ]; then
   echo "No resource group name provided"
@@ -8,57 +9,65 @@ else
 fi
 
 if [ -z "$2" ]; then
-  echo "No container image URI provided"
+  echo "No container registry provided"
   exit 2
 else
-  containerImage=$2
+  containerRegistry=$2
 fi
 
 if [ -z "$3" ]; then
-  echo "No tenantId provided"
+  echo "No container image URI provided"
   exit 3
 else
-  tenantId=$3
+  containerImage=$3
 fi
 
 if [ -z "$4" ]; then
-  echo "No applicationId provided"
+  echo "No tenantId provided"
   exit 4
 else
-  applicationId=$4
+  tenantId=$4
 fi
 
 if [ -z "$5" ]; then
-  echo "No applicationSecret provided"
+  echo "No applicationId provided"
   exit 5
 else
-  applicationSecret=$5
+  applicationId=$5
 fi
 
 if [ -z "$6" ]; then
-  echo "No webHookApiKey provided"
+  echo "No applicationSecret provided"
   exit 6
 else
-  webHookApiKey=$6
+  applicationSecret=$6
 fi
 
 if [ -z "$7" ]; then
-  echo "No KeyVault URL provided"
+  echo "No webHookApiKey provided"
   exit 7
 else
-  keyVaultUrl=$7
+  webHookApiKey=$7
 fi
 
 if [ -z "$8" ]; then
-  echo "No Container App Environment ID provided"
+  echo "No KeyVault URL provided"
   exit 8
 else
-  containerAppEnvironmentId=$8
+  keyVaultUrl=$8
+fi
+
+if [ -z "$9" ]; then
+  echo "No Container App Environment ID provided"
+  exit 9
+else
+  containerAppEnvironmentId=$9
 fi
 
 az deployment group create -n app-deployment -g ${rg} \
   --template-file ./modules/secretDeliveryApp.bicep \
-  -p containerImage=${containerImage} \
+  -p containerRegistry=${containerRegistry} \
+     containerImage=${containerImage} \
      containerPort=80 \
      containerAppEnvironmentId=${containerAppEnvironmentId} \
      tenantId=${tenantId} \

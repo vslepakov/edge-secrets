@@ -1,5 +1,6 @@
 param location string = resourceGroup().location
 
+param containerRegistry string
 param containerImage string
 param containerPort int
 
@@ -52,6 +53,7 @@ module secretDeliveryApp 'modules/secretDeliveryApp.bicep' = {
   params: {
     name: 'secret-delivery-app'
     location: location
+    containerRegistry: containerRegistry
     containerImage: containerImage
     containerPort: containerPort
     tenantId: tenantId
