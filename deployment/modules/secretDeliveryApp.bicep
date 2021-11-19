@@ -37,8 +37,22 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
           name: 'application-client-secret'
           value: applicationSecret
         }
+        {
+          name: 'container-registry-username'
+          value: applicationId
+        }
+        {
+          name: 'container-registry-password'
+          value: applicationSecret
+        }
       ]
-      registries: []
+      registries: [
+        {
+          server: 'vislepakdemoacr.azurecr.io'
+          usernameSecretRef: 'container-registry-username'
+          passwordSecretRef: 'container-registry-password'
+        }
+      ]
       ingress: {
         external: true
         targetPort: containerPort
