@@ -9,11 +9,10 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
     using Microsoft.Azure.Devices.Client.Transport.Mqtt;
     using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
+    using EdgeSecrets.SecretManager.Edge;
 
     class Program
     {
-        static int counter;
-
         static void Main(string[] args)
         {
             Init().Wait();
@@ -48,9 +47,6 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             ModuleClient ioTHubModuleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
             await ioTHubModuleClient.OpenAsync();
             Console.WriteLine("IoT Hub module client initialized.");
-
-            // Register callback to be called when a message is received by the module
-            await ioTHubModuleClient.SetInputMessageHandlerAsync("input1", PipeMessage, ioTHubModuleClient);
 
             // Get secrets
             await GetSecrets();
@@ -96,71 +92,50 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
                     break;
             }; 
 
-            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
-            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
+            //// Get from file
+
+            // ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
+            // ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
+            // var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            // Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
+
+            // string keyA = "test";
+
+            // await manager.SetSecretValueAsync(keyA, "1234");
+            // string valueA1 = await manager.GetSecretValueAsync(keyA);
+            // Console.WriteLine($"Key '{keyA}' has value '{valueA1}'");
+
+            // string valueA2 = await manager.GetSecretValueAsync(keyA);
+            // Console.WriteLine($"Key '{keyA}' has value '{valueA2}'");
+
+            // await manager.SetSecretValueAsync(keyA, "abcdef");
+            // string valueA3 = await manager.GetSecretValueAsync(keyA);
+            // Console.WriteLine($"Key '{keyA}' has value '{valueA3}'");
+
+            // string keyB = "secret";
+
+            // await manager.SetSecretValueAsync(keyB, "azure");
+            // string valueB1 = await manager.GetSecretValueAsync(keyB);
+            // Console.WriteLine($"Key '{keyB}' has value '{valueB1}'");
+
+            // string valueB2 = await manager.GetSecretValueAsync(keyB);
+            // Console.WriteLine($"Key '{keyB}' has value '{valueB2}'");
+
+            // await manager.SetSecretValueAsync(keyB, "veryverysecret");
+            // string valueB3 = await manager.GetSecretValueAsync(keyB);
+            // Console.WriteLine($"Key '{keyB}' has value '{valueB3}'");
+
+            //// Get from remote
+
+            ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
+            ISecretStore secretStore = new InMemorySecretStore(cryptoProvider, new KeyOptions(), remoteSecretStore);
             var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
             Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
 
             string keyA = "test";
 
-            await manager.SetSecretValueAsync(keyA, "1234");
             string valueA1 = await manager.GetSecretValueAsync(keyA);
             Console.WriteLine($"Key '{keyA}' has value '{valueA1}'");
-
-            string valueA2 = await manager.GetSecretValueAsync(keyA);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA2}'");
-
-            await manager.SetSecretValueAsync(keyA, "abcdef");
-            string valueA3 = await manager.GetSecretValueAsync(keyA);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA3}'");
-
-            string keyB = "secret";
-
-            await manager.SetSecretValueAsync(keyB, "azure");
-            string valueB1 = await manager.GetSecretValueAsync(keyB);
-            Console.WriteLine($"Key '{keyB}' has value '{valueB1}'");
-
-            string valueB2 = await manager.GetSecretValueAsync(keyB);
-            Console.WriteLine($"Key '{keyB}' has value '{valueB2}'");
-
-            await manager.SetSecretValueAsync(keyB, "veryverysecret");
-            string valueB3 = await manager.GetSecretValueAsync(keyB);
-            Console.WriteLine($"Key '{keyB}' has value '{valueB3}'");
-        }
-
-        /// <summary>
-        /// This method is called whenever the module is sent a message from the EdgeHub. 
-        /// It just pipe the messages without any change.
-        /// It prints all the incoming messages.
-        /// </summary>
-        static async Task<MessageResponse> PipeMessage(Message message, object userContext)
-        {
-            int counterValue = Interlocked.Increment(ref counter);
-
-            var moduleClient = userContext as ModuleClient;
-            if (moduleClient == null)
-            {
-                throw new InvalidOperationException("UserContext doesn't contain " + "expected values");
-            }
-
-            byte[] messageBytes = message.GetBytes();
-            string messageString = Encoding.UTF8.GetString(messageBytes);
-            Console.WriteLine($"Received message: {counterValue}, Body: [{messageString}]");
-
-            if (!string.IsNullOrEmpty(messageString))
-            {
-                using (var pipeMessage = new Message(messageBytes))
-                {
-                    foreach (var prop in message.Properties)
-                    {
-                        pipeMessage.Properties.Add(prop.Key, prop.Value);
-                    }
-                    await moduleClient.SendEventAsync("output1", pipeMessage);
-                
-                    Console.WriteLine("Received message sent");
-                }
-            }
-            return MessageResponse.Completed;
         }
     }
 }

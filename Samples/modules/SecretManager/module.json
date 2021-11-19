@@ -4,7 +4,7 @@
   "image": {
     "repository": "${ACR_ADDRESS}/edgesecrets/secretmanager",
     "tag": {
-      "version": "0.0.7",
+      "version": "0.0.16",
       "platforms": {
         "amd64": "./Dockerfile.amd64",
         "amd64.debug": "./Dockerfile.amd64.debug",

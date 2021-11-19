@@ -2,7 +2,7 @@ namespace EdgeSecrets.SecretManager
 {
     using System;
 
-    public record class Secret
+    public record Secret
     {
         public string Name { get; set; }
         public string Value { get; set; }
