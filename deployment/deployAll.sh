@@ -9,45 +9,52 @@ else
 fi
 
 if [ -z "$2" ]; then
-  echo "No coontainer image URI provided"
+  echo "No container registry provided"
   exit 2
 else
-  containerImage=$2
+  containerRegistry=$2
 fi
 
 if [ -z "$3" ]; then
-  echo "No tenantId provided"
+  echo "No container image URI provided"
   exit 3
 else
-  tenantId=$3
+  containerImage=$3
 fi
 
 if [ -z "$4" ]; then
-  echo "No objectId provided"
+  echo "No tenantId provided"
   exit 4
 else
-  objectId=$4
+  tenantId=$4
 fi
 
 if [ -z "$5" ]; then
-  echo "No applicationId provided"
+  echo "No objectId provided"
   exit 5
 else
-  applicationId=$5
+  objectId=$5
 fi
 
 if [ -z "$6" ]; then
-  echo "No applicationSecret provided"
+  echo "No applicationId provided"
   exit 6
 else
-  applicationSecret=$6
+  applicationId=$6
 fi
 
 if [ -z "$7" ]; then
-  echo "No webHookApiKey provided"
+  echo "No applicationSecret provided"
   exit 7
 else
-  webHookApiKey=$7
+  applicationSecret=$7
+fi
+
+if [ -z "$8" ]; then
+  echo "No webHookApiKey provided"
+  exit 8
+else
+  webHookApiKey=$8
 fi
 
 getRandomString() {
@@ -60,7 +67,8 @@ az group create -n ${rg} -l northeurope
 
 az deployment group create -n ${deploymentName} -g ${rg} \
   --template-file ./main.bicep \
-  -p containerImage=${containerImage} \
+  -p containerRegistry=${containerRegistry} \
+     containerImage=${containerImage} \
      containerPort=80 \
      tenantId=${tenantId} \
      objectId=${objectId} \

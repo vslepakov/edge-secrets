@@ -3,15 +3,15 @@
 To deploy the whole solution with all the services:
 
 ```bash
-./deployAll.sh [RG Name] [Image URI] [Tenant ID] [App Object ID] [App Client ID] [App Password] [WebHook API Key to use]
+./deployAll.sh [RG Name] [Container Registry] [Image URI] [Tenant ID] [App Object ID] [App Client ID] [App Password] [WebHook API Key to use]
 ```
 
-> Tenant ID, App Object ID, App Client ID and App Password are needed to give the container app access to Azure KeyVault.
+> Tenant ID, App Object ID, App Client ID and App Password are needed to give the container app access to Azure KeyVault and Azure Container Registry.
 
 To deploy the container app only (TODO: setup Continuous Deployment from GitHub):
 
 ```bash
-./deployApp.sh [RG Name] [Image URI] [Tenant ID] [App Client ID] [App Password] [WebHook API Key to use] [Azure KeyVault URL] [KubeEnvironment Resource ID]
+./deployApp.sh [RG Name] [Container Registry] [Image URI] [Tenant ID] [App Client ID] [App Password] [WebHook API Key to use] [Azure KeyVault URL] [KubeEnvironment Resource ID]
 
 ```
 
