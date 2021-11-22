@@ -43,7 +43,8 @@ namespace EdgeSecrets.SecretManager
             if (File.Exists(_fileName))
             {
                 using FileStream openStream = File.OpenRead(_fileName);
-                var fileSecrets = await JsonSerializer.DeserializeAsync<SecretList>(openStream, null, cancellationToken);
+                var options = new JsonSerializerOptions { };
+                var fileSecrets = await JsonSerializer.DeserializeAsync<SecretList>(openStream, options, cancellationToken);
 
                 if (secretNames != null)
                 {
