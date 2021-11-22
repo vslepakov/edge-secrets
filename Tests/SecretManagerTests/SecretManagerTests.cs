@@ -1,5 +1,6 @@
 ﻿namespace Tests
 {
+    using System;
     using System.Threading.Tasks;
     using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
@@ -15,14 +16,15 @@
 
             var cryptoProvider = new TestCryptoProvider();
 
-            ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
-            ISecretStore secretStore = new InMemorySecretStore(cryptoProvider, new KeyOptions(), fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, new KeyOptions(), secretStore);
+            ISecretStore fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, new KeyOptions());
+            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
+            var manager = new SecretManagerClient(secretStore);
+            await fileSecretStore.ClearCacheAsync(default);
 
             // Act
             string key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            string value = await manager.GetSecretValueAsync(key);
+            string value = await manager.GetSecretValueAsync(key, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -47,14 +49,15 @@
                 KeySize = 2048
             };
 
-            var fileSecretStore = new FileSecretStore("secrets.json");
-            var secretStore = new InMemorySecretStore(cryptoProvider, new KeyOptions(), fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            var fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, kms);
+            var secretStore = new InMemorySecretStore(fileSecretStore);
+            var manager = new SecretManagerClient(secretStore);
+            await fileSecretStore.ClearCacheAsync(default);
 
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key);
+            var value = await manager.GetSecretValueAsync(key, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -80,14 +83,15 @@
                 KeySize = 2048
             };
 
-            var fileSecretStore = new FileSecretStore("secrets.json");
-            var secretStore = new InMemorySecretStore(cryptoProvider, new KeyOptions(), fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            var fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, kms);
+            var secretStore = new InMemorySecretStore(fileSecretStore);
+            var manager = new SecretManagerClient(secretStore);
+            await fileSecretStore.ClearCacheAsync(default);
 
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key);
+            var value = await manager.GetSecretValueAsync(key, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -112,14 +116,15 @@
                 KeyType = KeyType.Symmetric
             };
 
-            var fileSecretStore = new FileSecretStore("secrets.json");
-            var secretStore = new InMemorySecretStore(cryptoProvider, new KeyOptions(), fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            var fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, kms);
+            var secretStore = new InMemorySecretStore(fileSecretStore);
+            var manager = new SecretManagerClient(secretStore);
+            await fileSecretStore.ClearCacheAsync(default);
 
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key);
+            var value = await manager.GetSecretValueAsync(key, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));

@@ -3,10 +3,10 @@ namespace EdgeSecrets.SecretManager.Edge
     using System;
     using System.Collections.Generic;
 
-    public class RequestSecretRequest
+    public record RequestSecretRequest
     {
-        public string RequestId { get; set; } = Guid.NewGuid().ToString();
+        public string RequestId { get; init; } = Guid.NewGuid().ToString();
         public DateTime CreateDate { get; } = DateTime.Now;
-        public List<string> Secrets { get; set; } = new List<string>();
+        public IList<string> Secrets { get; init; } = new List<string>();
     }
 }

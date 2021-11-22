@@ -1,5 +1,6 @@
 namespace EdgeSecrets.SecretManager
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Text.Json;
@@ -9,48 +10,99 @@ namespace EdgeSecrets.SecretManager
 
     public class FileSecretStore : SecretStoreBase
     {
-        private string _fileName;
+        private readonly string _fileName;
 
         public FileSecretStore(string fileName,
-            ICryptoProvider cryptoProvider = null, KeyOptions keyOptions = null, ISecretStore secretStore = null)
+            ISecretStore secretStore = null, ICryptoProvider cryptoProvider = null, KeyOptions keyOptions = null)
             : base(cryptoProvider, keyOptions, secretStore)
         {
             _fileName = fileName;
         }
 
-        protected override async Task<Secret> GetSecretInternalAsync(string name, CancellationToken cancellationToken)
+        protected override async Task ClearCacheInternalAsync(CancellationToken cancellationToken)
         {
-            Secret value = null;
             if (File.Exists(_fileName))
             {
-                IDictionary<string, Secret> secrets;
-                using FileStream openStream = File.OpenRead(_fileName);
-                secrets = await JsonSerializer.DeserializeAsync<Dictionary<string, Secret>>(openStream);
-                secrets.TryGetValue(name, out value);
+                File.Delete(_fileName);
             }
-            return value;
         }
 
-        protected override async Task SetSecretInternalAsync(string name, Secret value, CancellationToken cancellationToken)
+        protected override async Task<Secret> GetSecretInternalAsync(string secretName, DateTime date, CancellationToken cancellationToken)
         {
-            // Get secret list from local file (if exists)
-            IDictionary<string, Secret> secrets;
+            SecretList localSecrets = await RetrieveSecretsFromSourceAsync(new List<string>() { secretName }, cancellationToken);
+            if (localSecrets != null)
+            {
+                return localSecrets.GetSecret(secretName, date);
+            }
+            return null;
+        }
+
+        protected override async Task<SecretList> RetrieveSecretsFromSourceAsync(IList<string> secretNames, CancellationToken cancellationToken)
+        {
+            SecretList localSecrets = null;
             if (File.Exists(_fileName))
             {
                 using FileStream openStream = File.OpenRead(_fileName);
-                secrets = await JsonSerializer.DeserializeAsync<Dictionary<string, Secret>>(openStream);
+                var fileSecrets = await JsonSerializer.DeserializeAsync<SecretList>(openStream, null, cancellationToken);
+
+                if (secretNames != null)
+                {
+                    localSecrets = new SecretList();
+                    foreach (var secretName in secretNames)
+                    {
+                        if (fileSecrets.ContainsKey(secretName))
+                        {
+                            localSecrets.Add(secretName, fileSecrets[secretName]);
+                        }
+                    }
+                }
+                else
+                {
+                    localSecrets = fileSecrets;
+                }
             }
-            else
+            return localSecrets;
+        }
+
+        protected override async Task SetSecretInternalAsync(Secret secret, CancellationToken cancellationToken)
+        {
+            // Get secret list from local file (if exists)
+            SecretList localSecrets = await RetrieveSecretsFromSourceAsync(null, cancellationToken);
+            if (localSecrets == null)
             {
-                secrets = new Dictionary<string, Secret>();
+                localSecrets = new SecretList();
             }
 
             // Add secret to secret list
-            secrets[name] = value;
+            localSecrets.SetSecret(secret);
 
             // Store secret list into local file
             using FileStream createStream = File.Create(_fileName);
-            await JsonSerializer.SerializeAsync(createStream, secrets);
+            await JsonSerializer.SerializeAsync(createStream, localSecrets);
+            await createStream.DisposeAsync();
+        }
+
+        protected override async Task MergeSecretsInternalAsync(SecretList secretList, CancellationToken cancellationToken)
+        {
+            // Get secret list from local file (if exists)
+            SecretList localSecrets = await RetrieveSecretsFromSourceAsync(null, cancellationToken);
+            if (localSecrets == null)
+            {
+                localSecrets = new SecretList();
+            }
+
+            // Add secret to secret list
+            foreach (var secretVersions in secretList.Values)
+            {
+                foreach (var secret in secretVersions.Values)
+                {
+                    localSecrets.SetSecret(secret);
+                }
+            }
+
+            // Store secret list into local file
+            using FileStream createStream = File.Create(_fileName);
+            await JsonSerializer.SerializeAsync(createStream, localSecrets);
             await createStream.DisposeAsync();
         }
     }

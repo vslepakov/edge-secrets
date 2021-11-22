@@ -1,21 +1,21 @@
 ﻿namespace EdgeSecrets.SecretManager
 {
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using EdgeSecrets.CryptoProvider;
 
     public class SecretManagerClient
     {
         private ISecretStore _secretStore;
 
-        public SecretManagerClient(ICryptoProvider cryptoProvider, KeyOptions keyOptions, ISecretStore secretStore)
+        public SecretManagerClient(ISecretStore secretStore)
         {
             _secretStore = secretStore;
         }
 
-        public async Task<string> GetSecretValueAsync(string name, CancellationToken cancellationToken = default)
+        public async Task<string> GetSecretValueAsync(string name, DateTime date, CancellationToken cancellationToken = default)
         {
-            var secret = await _secretStore.GetSecretAsync(name, cancellationToken);
+            var secret = await _secretStore.GetSecretAsync(name, date, cancellationToken);
             if (secret != null)
             {
                 return secret.Value;
@@ -25,17 +25,16 @@
 
         public async Task SetSecretValueAsync(string name, string plainText, CancellationToken cancellationToken = default)
         {
-            string encryptedValue = plainText;
-            var secret = await _secretStore.GetSecretAsync(name, cancellationToken);
+            var secret = await _secretStore.GetSecretAsync(name, DateTime.UtcNow, cancellationToken);
             if (secret != null)
             {
-                secret = secret with { Value = encryptedValue };
+                secret = secret with { Value = plainText };
             }
             else
             {
-                secret = new Secret() { Name = name, Value = encryptedValue };
+                secret = new Secret() { Name = name, Value = plainText };
             }
-            await _secretStore.SetSecretAsync(name, secret, cancellationToken);
+            await _secretStore.SetSecretAsync(secret, cancellationToken);
         }
     }
 }

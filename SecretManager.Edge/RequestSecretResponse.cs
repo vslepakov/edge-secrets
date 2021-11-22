@@ -4,10 +4,9 @@ namespace EdgeSecrets.SecretManager.Edge
     using System.Collections.Generic;
     using EdgeSecrets.SecretManager;
 
-    public class RequestSecretResponse
+    public record RequestSecretResponse
     {
-        public string RequestId { get; set; }
-        public DateTime CreateDate { get; } = DateTime.Now;
-        public List<Secret> Secrets { get; set; } = new List<Secret>();
+        public string RequestId { get; init; }
+        public IList<Secret> Secrets { get; init; } = new List<Secret>();
     }
 }

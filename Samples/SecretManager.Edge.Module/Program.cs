@@ -128,13 +128,13 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             //// Get from remote
 
             ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
-            ISecretStore secretStore = new InMemorySecretStore(cryptoProvider, new KeyOptions(), remoteSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            ISecretStore secretStore = new InMemorySecretStore(remoteSecretStore);
+            var manager = new SecretManagerClient(secretStore);
             Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
 
             string keyA = "test";
 
-            string valueA1 = await manager.GetSecretValueAsync(keyA);
+            string valueA1 = await manager.GetSecretValueAsync(keyA, DateTime.Now);
             Console.WriteLine($"Key '{keyA}' has value '{valueA1}'");
         }
     }
