@@ -1,8 +1,7 @@
-namespace EdgeSecrets.Samples.SecretManager.Edge
+namespace EdgeSecrets.Samples.SecretManager.Edge.Module
 {
     using System;
     using System.Runtime.Loader;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.Client;
@@ -54,82 +53,25 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
 
         static async Task GetSecrets()
         {
-            string KEY_ID = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
-            string CRYPTO_PROVIDER = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER");
-            //TO DO: pass over the Initialization Vector
-            string INIT_VECTOR = Environment.GetEnvironmentVariable("EDGESECRET_INIT_VECTOR");
-
             ICryptoProvider cryptoProvider;
-            KeyOptions kms;
-            switch (CRYPTO_PROVIDER)
-            {
-                default:
-                    throw new ArgumentException($"'{CRYPTO_PROVIDER}' is not a supported crypto provider");
-                                    
-                case "workload-api":
-                    cryptoProvider = new WorkloadApiCryptoProvider();
-
-                    //TO DO: pass over the Initialization Vector to WorkloadApiCryptoProvider
-					Console.WriteLine($"initialization vector '{INIT_VECTOR}'");
-                    
-                    kms = new KeyOptions 
-                    {
-                        KeyId = KEY_ID, 
-                        KeyType = KeyType.Symmetric,
-                        KeySize = 2048
-                    };
-                    break;
-
-                case "azure-kv":
-                    cryptoProvider = new AzureKeyVaultCryptoProvider();
-
-                    kms = new KeyOptions 
-                    {
-                        KeyId = KEY_ID, 
-                        KeyType = KeyType.RSA,
-                        KeySize = 2048
-                    };
-                    break;
-            }; 
+            KeyOptions keyOptions;
+            (cryptoProvider, keyOptions) = Configuration.GetCryptoProvider();
 
             //// Get from file
 
             // ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
             // ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
             // var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
-            // Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
-
-            // string keyA = "test";
-
-            // await manager.SetSecretValueAsync(keyA, "1234");
-            // string valueA1 = await manager.GetSecretValueAsync(keyA);
-            // Console.WriteLine($"Key '{keyA}' has value '{valueA1}'");
-
-            // string valueA2 = await manager.GetSecretValueAsync(keyA);
-            // Console.WriteLine($"Key '{keyA}' has value '{valueA2}'");
-
-            // await manager.SetSecretValueAsync(keyA, "abcdef");
-            // string valueA3 = await manager.GetSecretValueAsync(keyA);
-            // Console.WriteLine($"Key '{keyA}' has value '{valueA3}'");
-
-            // string keyB = "secret";
-
-            // await manager.SetSecretValueAsync(keyB, "azure");
-            // string valueB1 = await manager.GetSecretValueAsync(keyB);
-            // Console.WriteLine($"Key '{keyB}' has value '{valueB1}'");
-
-            // string valueB2 = await manager.GetSecretValueAsync(keyB);
-            // Console.WriteLine($"Key '{keyB}' has value '{valueB2}'");
-
-            // await manager.SetSecretValueAsync(keyB, "veryverysecret");
-            // string valueB3 = await manager.GetSecretValueAsync(keyB);
-            // Console.WriteLine($"Key '{keyB}' has value '{valueB3}'");
 
             //// Get from remote
 
             ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
-            ISecretStore secretStore = new InMemorySecretStore(remoteSecretStore);
+            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", remoteSecretStore, cryptoProvider, keyOptions);
+            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(secretStore);
+
+            //// Test the secret store
+
             Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
 
             string keyA = "test";

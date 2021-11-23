@@ -25,9 +25,10 @@ namespace EdgeSecrets.SecretManager
             {
                 File.Delete(_fileName);
             }
+            await Task.FromResult(0);
         }
 
-        protected override async Task<Secret> GetSecretInternalAsync(string secretName, DateTime date, CancellationToken cancellationToken)
+        protected override async Task<Secret> RetrieveSecretInternalAsync(string secretName, DateTime date, CancellationToken cancellationToken)
         {
             SecretList localSecrets = await RetrieveSecretsFromSourceAsync(new List<string>() { secretName }, cancellationToken);
             if (localSecrets != null)
@@ -65,7 +66,7 @@ namespace EdgeSecrets.SecretManager
             return localSecrets;
         }
 
-        protected override async Task SetSecretInternalAsync(Secret secret, CancellationToken cancellationToken)
+        protected override async Task StoreSecretInternalAsync(Secret secret, CancellationToken cancellationToken)
         {
             // Get secret list from local file (if exists)
             SecretList localSecrets = await RetrieveSecretsFromSourceAsync(null, cancellationToken);
@@ -83,7 +84,7 @@ namespace EdgeSecrets.SecretManager
             await createStream.DisposeAsync();
         }
 
-        protected override async Task MergeSecretsInternalAsync(SecretList secretList, CancellationToken cancellationToken)
+        protected override async Task MergeSecretListInternalAsync(SecretList secretList, CancellationToken cancellationToken)
         {
             // Get secret list from local file (if exists)
             SecretList localSecrets = await RetrieveSecretsFromSourceAsync(null, cancellationToken);

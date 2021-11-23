@@ -56,14 +56,15 @@ namespace EdgeSecrets.SecretManager.Edge
                 Console.WriteLine($"Received update of secrets for unknown Request id '{response.RequestId}'");
             }
 
-            return new MethodResponse(200);
+            return await Task.FromResult(new MethodResponse(200));
         }
 
         protected override async Task ClearCacheInternalAsync(CancellationToken cancellationToken)
         {
+            await Task.FromResult(0);
         }
 
-        protected override async Task<Secret> GetSecretInternalAsync(string secretName, DateTime date, CancellationToken cancellationToken)
+        protected override async Task<Secret> RetrieveSecretInternalAsync(string secretName, DateTime date, CancellationToken cancellationToken)
         {
             SecretList secretList = await RetrieveSecretsFromSourceAsync(new List<string>() { secretName }, cancellationToken);
             return secretList.GetSecret(secretName, date);
@@ -103,12 +104,14 @@ namespace EdgeSecrets.SecretManager.Edge
             return new SecretList(secrets);
         }
 
-        protected override async Task SetSecretInternalAsync(Secret value, CancellationToken cancellationToken)
+        protected override async Task StoreSecretInternalAsync(Secret value, CancellationToken cancellationToken)
         {
+            await Task.FromResult(0);
         }
 
-        protected override async Task MergeSecretsInternalAsync(SecretList secretList, CancellationToken cancellationToken)
+        protected override async Task MergeSecretListInternalAsync(SecretList secretList, CancellationToken cancellationToken)
         {
+            await Task.FromResult(0);
         }
     }
 }
