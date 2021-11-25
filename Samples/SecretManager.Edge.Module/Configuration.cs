@@ -5,17 +5,17 @@
 
     internal class Configuration
     {
-        public static (ICryptoProvider, KeyOptions) GetCryptoProvider()
+        public static (ICryptoProvider?, KeyOptions?) GetCryptoProvider()
         {
-            string keyId = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
-            string cryptoProviderName = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER") ?? "none";
+            string? keyId = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
+            string? cryptoProviderName = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER") ?? "none";
 
-            KeyOptions keyOptions;
-            ICryptoProvider cryptoProvider;
+            KeyOptions? keyOptions;
+            ICryptoProvider? cryptoProvider;
             switch (cryptoProviderName)
             {
                 case "none":
-                    cryptoProvider = null;
+                    cryptoProvider = default;
                     keyOptions = null;
                     break;
                 case "identity-service":
@@ -28,7 +28,11 @@
                     };
                     break;
                 case "workload-api":
-                    string initializationVector = Environment.GetEnvironmentVariable("EDGESECRET_INIT_VECTOR");
+                    string? initializationVector = Environment.GetEnvironmentVariable("EDGESECRET_INIT_VECTOR");
+                    if (initializationVector != null)
+                    {
+                        Console.WriteLine($"Using initialization vector {initializationVector}");
+                    }
                     cryptoProvider = new WorkloadApiCryptoProvider(initializationVector);
                     keyOptions = new KeyOptions
                     {

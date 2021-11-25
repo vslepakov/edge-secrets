@@ -13,30 +13,35 @@ namespace EdgeSecrets.SecretManager.Edge
     {
         public record PendingRequest
         {
-            public RequestSecretRequest Request;
+            public RequestSecretRequest? Request;
             public TaskCompletionSource<RequestSecretResponse> ResponseReceived = new();
         }
 
         private TransportType _transportType;
-        private ClientOptions _clientOptions;
-        private ModuleClient _moduleClient = null;
-        private Dictionary<string, PendingRequest> _pendingRequests = new Dictionary<string, PendingRequest>();
+        private ClientOptions? _clientOptions;
+        private ModuleClient? _moduleClient = null;
+        private Dictionary<string, PendingRequest> _pendingRequests = new();
 
-        public RemoteSecretStore(TransportType transportType, ClientOptions clientOptions = default,
-            ISecretStore secretStore = null, ICryptoProvider cryptoProvider = null, KeyOptions keyOptions = null)
-            : base(cryptoProvider, keyOptions, secretStore)
+        public RemoteSecretStore(TransportType transportType, ClientOptions? clientOptions = default,
+            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, KeyOptions? keyOptions = null)
+            : base(secretStore, cryptoProvider, keyOptions)
         {
             _transportType = transportType;
             _clientOptions = clientOptions;
         }
 
-        protected async Task InitializeModuleClient(CancellationToken cancellationToken)
+        protected async Task<bool> InitializeModuleClient(CancellationToken cancellationToken)
         {
             if (_moduleClient == null)
             {
                 _moduleClient = await ModuleClient.CreateFromEnvironmentAsync(_transportType, _clientOptions);
-                await _moduleClient.SetMethodHandlerAsync("UpdateSecrets", HandleUpdateSecretsCommand, this, cancellationToken);
+                if (_moduleClient != null)
+                {
+                    await _moduleClient.SetMethodHandlerAsync("UpdateSecrets", HandleUpdateSecretsCommand, this, cancellationToken);
+                    return true;
+                }
             }
+            return false;
         }
 
         private async Task<MethodResponse> HandleUpdateSecretsCommand(MethodRequest methodRequest, object userContext)
@@ -44,16 +49,17 @@ namespace EdgeSecrets.SecretManager.Edge
             var response = JsonSerializer.Deserialize<RequestSecretResponse>(methodRequest.DataAsJson);
 
             // Find pending request with the same RequestId as the response
-            if (_pendingRequests.TryGetValue(response.RequestId, out PendingRequest request))
+            if (response != null)
             {
-                Console.WriteLine($"Received update of secrets for RequestId '{response.RequestId}'");
-
-                // Complete wait Task with the Response as result
-                request.ResponseReceived.TrySetResult(response);
-            }
-            else
-            {
-                Console.WriteLine($"Received update of secrets for unknown Request id '{response.RequestId}'");
+                if (_pendingRequests.TryGetValue(response.RequestId, out PendingRequest? request))
+                {
+                    // Complete wait Task with the Response as result
+                    request?.ResponseReceived.TrySetResult(response);
+                }
+                else
+                {
+                    Console.WriteLine($"Received update of secrets for unknown Request id '{response.RequestId}'");
+                }
             }
 
             return await Task.FromResult(new MethodResponse(200));
@@ -64,44 +70,49 @@ namespace EdgeSecrets.SecretManager.Edge
             await Task.FromResult(0);
         }
 
-        protected override async Task<Secret> RetrieveSecretInternalAsync(string secretName, DateTime date, CancellationToken cancellationToken)
+        protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
         {
-            SecretList secretList = await RetrieveSecretsFromSourceAsync(new List<string>() { secretName }, cancellationToken);
-            return secretList.GetSecret(secretName, date);
+            SecretList? secretList = await RetrieveSecretsFromSourceAsync(new List<Secret?>() { new Secret(secretName) }, cancellationToken);
+            return secretList?.GetSecret(secretName, version, date);
         }
 
-        protected override async Task<SecretList> RetrieveSecretsFromSourceAsync(IList<string> secretNames, CancellationToken cancellationToken)
+        protected override async Task<SecretList?> RetrieveSecretsFromSourceAsync(IList<Secret?>? secrets, CancellationToken cancellationToken)
         {
-            await InitializeModuleClient(cancellationToken);
+            if (await InitializeModuleClient(cancellationToken))
+            {
+                // Create new request
+                var request = new RequestSecretRequest() { Secrets = secrets };
 
-            // Create new request
-            var request = new RequestSecretRequest() {  Secrets = secretNames };
+                // Add request to list of pending requests
+                var pendingRequest = new PendingRequest() { Request = request };
+                _pendingRequests.Add(request.RequestId, pendingRequest);
 
-            // Add request to list of pending requests
-            var pendingRequest = new PendingRequest() { Request = request };
-            _pendingRequests.Add(request.RequestId, pendingRequest);
+                // Send the request to the cloud
+                var messageString = JsonSerializer.Serialize(request);
+                var message = new Message(Encoding.ASCII.GetBytes(messageString));
+                message.Properties.Add("secret-request-id", request.RequestId);
+                await _moduleClient!.SendEventAsync(message, cancellationToken);
+                Console.WriteLine($"Send request for secrets with id '{request.RequestId}'");
 
-            // Send the request to the cloud
-            var messageString = JsonSerializer.Serialize(request);
-            var message = new Message(Encoding.ASCII.GetBytes(messageString));
-            message.Properties.Add("secret-request-id", request.RequestId);
-            await _moduleClient.SendEventAsync(message, cancellationToken);
-            Console.WriteLine($"Send request for secrets with id '{request.RequestId}'");
+                // Wait for the response
+                IList<Secret?>? remoteSecrets = null;
+                using (cancellationToken.Register(() =>
+                {
+                    pendingRequest.ResponseReceived.TrySetCanceled();
+                }))
+                {
+                    RequestSecretResponse response = await pendingRequest.ResponseReceived.Task;
+                    Console.WriteLine($"Received update of secrets for RequestId '{response.RequestId}' ({response.Secrets.Count} secret received");
+                    remoteSecrets = response.Secrets;
+                }
 
-            // Wait for the response
-            IList<Secret> secrets = null;
-            using (cancellationToken.Register(() => {
-                pendingRequest.ResponseReceived.TrySetCanceled();
-            })) {
-                RequestSecretResponse response = await pendingRequest.ResponseReceived.Task;
-                secrets = response.Secrets;
+                // Remove the request from the list of pending requests
+                _pendingRequests.Remove(request.RequestId);
+
+                // Convert secrets to secret list
+                return new SecretList(remoteSecrets);
             }
-
-            // Remove the request from the list of pending requests
-            _pendingRequests.Remove(request.RequestId);
-
-            // Convert secrets to secret list
-            return new SecretList(secrets);
+            return null;
         }
 
         protected override async Task StoreSecretInternalAsync(Secret value, CancellationToken cancellationToken)

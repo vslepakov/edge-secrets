@@ -11,8 +11,8 @@ namespace EdgeSecrets.SecretManager
         private readonly SecretList _cachedSecrets = new();
 
         public InMemorySecretStore(
-            ISecretStore secretStore = null, ICryptoProvider cryptoProvider = null, KeyOptions keyOptions = null)
-            : base(cryptoProvider, keyOptions, secretStore)
+            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, KeyOptions? keyOptions = null)
+            : base(secretStore, cryptoProvider, keyOptions)
         {
         }
 
@@ -22,14 +22,14 @@ namespace EdgeSecrets.SecretManager
             await Task.FromResult(0);
         }
 
-        protected override async Task<Secret> RetrieveSecretInternalAsync(string secretName, DateTime date, CancellationToken cancellationToken)
+        protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
         {
-            return await Task.FromResult(_cachedSecrets?.GetSecret(secretName, date));
+            return await Task.FromResult(_cachedSecrets?.GetSecret(secretName, version, date));
         }
 
-        protected override async Task<SecretList> RetrieveSecretsFromSourceAsync(IList<string> secretNames, CancellationToken cancellationToken)
+        protected override async Task<SecretList?> RetrieveSecretsFromSourceAsync(IList<Secret?>? secretNames, CancellationToken cancellationToken)
         {
-            return await Task.FromResult<SecretList>(null);
+            return await Task.FromResult<SecretList?>(null);
         }
 
         protected override async Task StoreSecretInternalAsync(Secret secret, CancellationToken cancellationToken)
@@ -40,9 +40,9 @@ namespace EdgeSecrets.SecretManager
 
         protected override async Task MergeSecretListInternalAsync(SecretList secretList, CancellationToken cancellationToken)
         {
-            foreach(var secretVersions in secretList.Values)
+            foreach (var secretVersions in secretList.Values)
             {
-                foreach(var secret in secretVersions.Values)
+                foreach (var secret in secretVersions.Values)
                 {
                     await StoreSecretInternalAsync(secret, cancellationToken);
                 }

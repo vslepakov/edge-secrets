@@ -24,7 +24,7 @@
             // Act
             string key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            string value = await manager.GetSecretValueAsync(key, DateTime.Now);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -57,7 +57,7 @@
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key, DateTime.Now);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -91,7 +91,7 @@
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key, DateTime.Now);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -124,7 +124,7 @@
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key, DateTime.Now);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));

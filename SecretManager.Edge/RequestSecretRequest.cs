@@ -7,6 +7,6 @@ namespace EdgeSecrets.SecretManager.Edge
     {
         public string RequestId { get; init; } = Guid.NewGuid().ToString();
         public DateTime CreateDate { get; } = DateTime.Now;
-        public IList<string> Secrets { get; init; } = new List<string>();
+        public IList<Secret?>? Secrets { get; init; } = new List<Secret?>();
     }
 }

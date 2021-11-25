@@ -28,9 +28,16 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
         /// </summary>
         public static Task WhenCancelled(CancellationToken cancellationToken)
         {
-            var tcs = new TaskCompletionSource<bool>();
-            cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).SetResult(true), tcs);
-            return tcs.Task;
+            TaskCompletionSource<bool>? taskCompletionSource = new();
+            cancellationToken.Register(s =>
+            {
+                var tcs = (TaskCompletionSource<bool>?)s;
+                if (tcs is not null)
+                {
+                    tcs.SetResult(true);
+                }
+            }, taskCompletionSource);
+            return taskCompletionSource.Task;
         }
 
         /// <summary>
@@ -53,9 +60,8 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
 
         static async Task GetSecrets()
         {
-            ICryptoProvider cryptoProvider;
-            KeyOptions keyOptions;
-            (cryptoProvider, keyOptions) = Configuration.GetCryptoProvider();
+            (ICryptoProvider? cryptoProvider, KeyOptions? keyOptions) = Configuration.GetCryptoProvider();
+            Console.WriteLine($"Using Crypto Provider {cryptoProvider.GetType()}");
 
             //// Get from file
 
@@ -68,16 +74,15 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
             ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", remoteSecretStore, cryptoProvider, keyOptions);
             ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);
+            var manager = new SecretManagerClient(secretStore);//.WithMemory().WithFile().WithRemote();
 
             //// Test the secret store
 
-            Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
-
             string keyA = "test";
-
-            string valueA1 = await manager.GetSecretValueAsync(keyA, DateTime.Now);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA1}'");
+            string? valueA1 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
+            Console.WriteLine($"Key '{keyA}' has value '{valueA1}' (first read)");
+            string? valueA2 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
+            Console.WriteLine($"Key '{keyA}' has value '{valueA2}' (second read)");
         }
     }
 }

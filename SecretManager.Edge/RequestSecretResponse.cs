@@ -6,7 +6,7 @@ namespace EdgeSecrets.SecretManager.Edge
 
     public record RequestSecretResponse
     {
-        public string RequestId { get; init; }
-        public IList<Secret> Secrets { get; init; } = new List<Secret>();
+        public string RequestId { get; init; } = string.Empty;
+        public IList<Secret?>? Secrets { get; init; } = new List<Secret?>();
     }
 }

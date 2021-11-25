@@ -20,32 +20,49 @@ namespace EdgeSecrets.SecretManager
         /// Multiple versions of a secret will be stored indexed by version.
         /// </summary>
         /// <param name="secrets">List of secrets to copy into the new list. This list can contain multiple versions with the same name.</param>
-        public SecretList(IList<Secret> secrets)
+        public SecretList(IList<Secret?>? secrets)
         {
             if (secrets != null)
             {
                 foreach (var secret in secrets)
                 {
-                    this.SetSecret(secret);
+                    if (secret != null)
+                    {
+                        this.SetSecret(secret);
+                    }
                 }
             }
         }
 
         /// <summary>
-        /// Get the secret by name and date.
+        /// Get the secret by name, version and date.
         /// </summary>
         /// <param name="secretName">Name of the secret to search for.</param>
-        /// <param name="date">If given, only secrets that are valid at the given date will be returned.</param>
-        /// <returns>The secret if found, or null if not found by name or active at given date.</returns>
-        public Secret GetSecret(string secretName, DateTime? date = null)
+        /// <param name="version">Version of the secret to search for, or null for any version.</param>
+        /// <param name="date">Date to use for validating the secret, or null for any date.</param>
+        /// <returns>The secret if found, the first secret if found more than one, or null if not found.</returns>
+        public Secret? GetSecret(string secretName, string? version, DateTime? date = null)
         {
-            if (this.TryGetValue(secretName, out Dictionary<string, Secret> secretVersions))
+            if (TryGetValue(secretName, out var secretVersions))
             {
-                foreach (var secret in secretVersions.Values)
+                if (version != null)
                 {
-                    if ((date != null) && (date >= secret.ActivationDate) && (date < secret.ExpirationDate))
+                    if (secretVersions.TryGetValue(version, out var secret))
                     {
-                        return secret;
+                        if ((date == null) || secret.DateIsActive(date))
+                        {
+                            return secret;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var secret in secretVersions.Values)
+                    {
+                        if ((date == null) || secret.DateIsActive(date))
+                        {
+                            return secret;
+                        }
                     }
                 }
             }
@@ -58,28 +75,31 @@ namespace EdgeSecrets.SecretManager
         /// <param name="secret">Secret to store</param>
         public void SetSecret(Secret secret)
         {
-            string nameKey = secret.Name;
-            string versionKey = secret.Version ?? EmptyVersion;
-            if (this.TryGetValue(nameKey, out Dictionary<string, Secret> secretVersions))
+            string? nameKey = secret.Name;
+            if (nameKey != null)
             {
-                // Secret already known, so update or add by version
-                if (secretVersions.ContainsKey(versionKey))
+                string versionKey = secret.Version ?? EmptyVersion;
+                if (TryGetValue(nameKey, out var secretVersions))
                 {
-                    secretVersions[versionKey] = secret;
+                    // Secret already known, so update or add by version
+                    if (secretVersions.ContainsKey(versionKey))
+                    {
+                        secretVersions[versionKey] = secret;
+                    }
+                    else
+                    {
+                        secretVersions.Add(versionKey, secret);
+                    }
                 }
                 else
                 {
-                    secretVersions.Add(versionKey, secret);
+                    // Secret not known yet, so add by name
+                    secretVersions = new Dictionary<string, Secret>
+                    {
+                        [versionKey] = secret
+                    };
+                    this[nameKey] = secretVersions;
                 }
-            }
-            else
-            {
-                // Secret not known yet, so add by name
-                secretVersions = new Dictionary<string, Secret>
-                {
-                    [versionKey] = secret
-                };
-                this[nameKey] = secretVersions;
             }
         }
     }
