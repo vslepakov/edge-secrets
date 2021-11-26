@@ -30,6 +30,7 @@ namespace EdgeSecrets.SecretManager.Edge
             _clientOptions = clientOptions;
         }
 
+        #region ModuleClient handling
         protected async Task<bool> InitializeModuleClient(CancellationToken cancellationToken)
         {
             if (_moduleClient == null)
@@ -54,7 +55,7 @@ namespace EdgeSecrets.SecretManager.Edge
                 if (_pendingRequests.TryGetValue(response.RequestId, out PendingRequest? request))
                 {
                     // Complete wait Task with the Response as result
-                    request?.ResponseReceived.TrySetResult(response);
+                    request?.ResponseReceived.SetResult(response);
                 }
                 else
                 {
@@ -64,6 +65,7 @@ namespace EdgeSecrets.SecretManager.Edge
 
             return await Task.FromResult(new MethodResponse(200));
         }
+        #endregion
 
         protected override async Task ClearCacheInternalAsync(CancellationToken cancellationToken)
         {
@@ -96,14 +98,14 @@ namespace EdgeSecrets.SecretManager.Edge
 
                 // Wait for the response
                 IList<Secret?>? remoteSecrets = null;
-                using (cancellationToken.Register(() =>
+                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                 {
-                    pendingRequest.ResponseReceived.TrySetCanceled();
-                }))
-                {
-                    RequestSecretResponse response = await pendingRequest.ResponseReceived.Task;
-                    Console.WriteLine($"Received update of secrets for RequestId '{response.RequestId}' ({response.Secrets.Count} secret received");
-                    remoteSecrets = response.Secrets;
+                    using (cts.Token.Register(() => pendingRequest.ResponseReceived.SetCanceled(), useSynchronizationContext: false))
+                    {
+                        var response = await pendingRequest.ResponseReceived.Task.ConfigureAwait(continueOnCapturedContext: false);
+                        Console.WriteLine($"Received update of secrets for RequestId '{response?.RequestId}' ({response?.Secrets?.Count} secret received");
+                        remoteSecrets = response.Secrets;
+                    }                        
                 }
 
                 // Remove the request from the list of pending requests

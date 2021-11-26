@@ -74,15 +74,15 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
             ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
             ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", remoteSecretStore, cryptoProvider, keyOptions);
             ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);//.WithMemory().WithFile().WithRemote();
-
+            var manager = new SecretManagerClient(secretStore);
+            
             //// Test the secret store
 
             string keyA = "test";
-            string? valueA1 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA1}' (first read)");
-            string? valueA2 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA2}' (second read)");
+            var valueA1 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
+            if (valueA1 != null) Console.WriteLine($"Key '{keyA}' has value '{valueA1}' (first read)");
+            var valueA2 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
+            if (valueA2 != null) Console.WriteLine($"Key '{keyA}' has value '{valueA2}' (second read)");
         }
     }
 }

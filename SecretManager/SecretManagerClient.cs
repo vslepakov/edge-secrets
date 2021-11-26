@@ -7,7 +7,7 @@
 
     public class SecretManagerClient
     {
-        private readonly int Timeout = 8000;
+        private readonly int Timeout = 15000;
         private readonly ISecretStore _secretStore;
 
         public SecretManagerClient(ISecretStore secretStore)
@@ -27,8 +27,20 @@
 
         public async Task<string?> GetSecretValueAsync(string name, string? version, DateTime? date, CancellationToken cancellationToken = default)
         {
-            var secret = await _secretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
-            return secret?.Value;
+            using (var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+            {
+                linkedTokenSource.CancelAfter(Timeout);
+                try
+                {
+                    var secret = await _secretStore.RetrieveSecretAsync(name, version, date, linkedTokenSource.Token);
+                    return secret?.Value;
+                }
+                catch (TaskCanceledException)
+                {
+                    Console.WriteLine("GetSecretValueAsync cancelled: timed out.");
+                }
+            }
+            return null;
         }
 
         public async Task<SecretList?> RetrieveSecretsAsync(IList<string> secretNames, CancellationToken cancellationToken = default)
