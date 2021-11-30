@@ -65,28 +65,22 @@ namespace EdgeSecrets.SecretManager
             var secret = await RetrieveSecretInternalAsync(secretName, version, date, cancellationToken);
             if (secret != null)
             {
-                Console.WriteLine($"==>SecretStoreBase:RetrieveSecretAsync secret '{secretName}' found locally with value '{secret.Value}'");
                 if (_cryptoProvider != null)
                 {
                     secret = secret with { Value = await _cryptoProvider.DecryptAsync(secret.Value, _keyOptions, cancellationToken) };
-                    Console.WriteLine($"==>SecretStoreBase:RetrieveSecretAsync decrypted secret to value = '{secret.Value}'");
                 }
             }
             else
             {
-                Console.WriteLine($"==>SecretStoreBase:RetrieveSecretAsync secret '{secretName}' not found locally");
                 if (_internalSecretStore != null)
                 {
                     secret = await _internalSecretStore.RetrieveSecretAsync(secretName, version, date, cancellationToken);
                     if (secret != null)
                     {
-                        Console.WriteLine($"==>SecretStoreBase:RetrieveSecretAsync secret '{secretName}' with value '{secret.Value}' retrieved from source and stored locally");
                         Secret? storeSecret;
                         if (_cryptoProvider != null)
                         {
-                            Console.WriteLine($"==>SecretStoreBase:RetrieveSecretAsync encrypt secret value '{secret.Value}'");
                             storeSecret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyOptions, cancellationToken) };
-                            Console.WriteLine($"==>SecretStoreBase:RetrieveSecretAsync encrypted value = '{storeSecret.Value}'");
                         }
                         else
                         {
@@ -117,11 +111,9 @@ namespace EdgeSecrets.SecretManager
         /// <returns></returns>
         public async Task<SecretList?> RetrieveSecretListAsync(IList<Secret?>? secrets, CancellationToken cancellationToken)
         {
-            Console.WriteLine($"==>SecretStoreBase:RetrieveSecretListAsync begin");
             SecretList? secretList = await RetrieveSecretListInternalAsync(secrets, cancellationToken);
             if (secretList != null)
             {
-                Console.WriteLine($"==>SecretStoreBase:RetrieveSecretListAsync secrets found locally");
                 if (_cryptoProvider != null)
                 {
                     SecretList? decryptedSecretList = new();
@@ -134,12 +126,10 @@ namespace EdgeSecrets.SecretManager
                         }
                     }
                     secretList = decryptedSecretList;
-                    Console.WriteLine($"==>SecretStoreBase:RetrieveSecretListAsync decrypted secrets");
                 }
             }
             else
             {
-                Console.WriteLine($"==>SecretStoreBase:RetrieveSecretListAsync secrets not found locally");
                 if (_internalSecretStore != null)
                 {
                     secretList = await _internalSecretStore.RetrieveSecretListAsync(secrets, cancellationToken);
@@ -157,7 +147,6 @@ namespace EdgeSecrets.SecretManager
                                     storeSecretList.SetSecret(encryptedSecret);
                                 }
                             }
-                            Console.WriteLine($"==>SecretStoreBase:RetrieveSecretListAsync encrypted secrets store locally");
                         }
                         else
                         {
@@ -166,7 +155,6 @@ namespace EdgeSecrets.SecretManager
 
                         // encrypt
                         await MergeSecretListInternalAsync(storeSecretList, cancellationToken);
-                        Console.WriteLine($"==>SecretStoreBase:RetrieveSecretListAsync secrets retrieved from source and merged locally");
                     }
                 }
             }
@@ -199,9 +187,7 @@ namespace EdgeSecrets.SecretManager
             // Add secret to cached secret list
             if (_cryptoProvider != null)
             {
-                Console.WriteLine($"==>SecretStoreBase:StoreSecretAsync encrypt secret value '{secret.Value}'");
                 secret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyOptions, cancellationToken) };
-                Console.WriteLine($"==>SecretStoreBase:StoreSecretAsync encrypted value = '{secret.Value}'");
             }
             await StoreSecretInternalAsync(secret, cancellationToken);
         }

@@ -17,7 +17,7 @@ namespace EdgeSecrets.SecretManager.Edge
             public TaskCompletionSource<RequestSecretResponse> ResponseReceived = new();
         }
 
-        private int _timeout = 20000; // 20s
+        private int _timeout = 10000; // 10s
         private TransportType _transportType;
         private ClientOptions? _clientOptions;
         private ModuleClient? _moduleClient = null;
@@ -55,10 +55,8 @@ namespace EdgeSecrets.SecretManager.Edge
             {
                 if (_pendingRequests.TryGetValue(response.RequestId, out PendingRequest? request))
                 {
-                    Console.WriteLine($"==>RemoteSecretStore:HandleUpdateSecretsCommand before SetResult");
                     // Complete wait Task with the Response as result
                     request?.ResponseReceived.SetResult(response);
-                    Console.WriteLine($"==>RemoteSecretStore:HandleUpdateSecretsCommand after SetResult");
                 }
                 else
                 {
@@ -85,15 +83,12 @@ namespace EdgeSecrets.SecretManager.Edge
         {
             if (await InitializeModuleClient(cancellationToken))
             {
-                Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync begin");
-
                 // Create new request
                 var request = new RequestSecretRequest() { Secrets = secrets };
 
                 // Add request to list of pending requests
                 var pendingRequest = new PendingRequest() { Request = request };
                 _pendingRequests.Add(request.RequestId, pendingRequest);
-                Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync pending request added");
 
                 // Send the request to the cloud
                 var messageString = JsonSerializer.Serialize(request);
@@ -109,18 +104,13 @@ namespace EdgeSecrets.SecretManager.Edge
                     using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                     {
                         cts.CancelAfter(_timeout);
-                        Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync linked token source (timeout {_timeout}) created");
                         using (cts.Token.Register(() => pendingRequest.ResponseReceived.SetCanceled(), useSynchronizationContext: false))
                         {
-                            Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync cancellation token registered");
                             var response = await pendingRequest.ResponseReceived.Task.ConfigureAwait(continueOnCapturedContext: false);
                             Console.WriteLine($"Received update of secrets for RequestId '{response?.RequestId}' ({response?.Secrets?.Count} secret(s) received)");
                             remoteSecrets = response?.Secrets;
-                            Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync response received");
                         }                        
-                        Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync cancellation token source finished");
                     }
-                    Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync linked token source finished");
                 }
                 catch (TaskCanceledException)
                 {
@@ -128,12 +118,9 @@ namespace EdgeSecrets.SecretManager.Edge
                 }  
 
                 // Remove the request from the list of pending requests
-                Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync remove pending request");
                 _pendingRequests.Remove(request.RequestId);
-                Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync pending request removed");
 
                 // Convert secrets to secret list
-                Console.WriteLine($"==>RemoteSecretStore:RetrieveSecretsFromSourceAsync end");
                 if (remoteSecrets != null)
                 {
                     return new SecretList(remoteSecrets);
