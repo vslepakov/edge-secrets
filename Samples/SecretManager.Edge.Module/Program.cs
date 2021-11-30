@@ -61,7 +61,7 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
         static async Task GetSecrets()
         {
             (ICryptoProvider? cryptoProvider, KeyOptions? keyOptions) = Configuration.GetCryptoProvider();
-            Console.WriteLine($"Using Crypto Provider {cryptoProvider.GetType()}");
+            Console.WriteLine($"Using Crypto Provider {cryptoProvider?.GetType()}");
 
             //// Get from file
 

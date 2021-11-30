@@ -262,7 +262,7 @@ namespace EdgeSecrets.CryptoProvider.SecurityDaemon
                     return encryptResponse.Ciphertext;
                 }
 
-                throw new InvalidOperationException($"Failed to execute sign request from IoTEdge security daemon. StatusCode={httpResponse.StatusCode} ReasonPhrase='{httpResponse.ReasonPhrase}' ResponsePayload='{responsePayload}' Request={requestString} This={this}");
+                throw new InvalidOperationException($"Failed to execute encrypt request from IoTEdge security daemon. StatusCode={httpResponse.StatusCode} ReasonPhrase='{httpResponse.ReasonPhrase}' ResponsePayload='{responsePayload}' Request={requestString} This={this}");
             }
         }
 
@@ -287,7 +287,7 @@ namespace EdgeSecrets.CryptoProvider.SecurityDaemon
                     return Encoding.UTF8.GetString(Convert.FromBase64String(decryptResponse.Plaintext));
                 }
 
-                throw new InvalidOperationException($"Failed to execute sign request from IoTEdge security daemon. StatusCode={httpResponse.StatusCode} ReasonPhrase='{httpResponse.ReasonPhrase}' ResponsePayload='{responsePayload}' Request={requestString} This={this}");
+                throw new InvalidOperationException($"Failed to execute decrypt request from IoTEdge security daemon. StatusCode={httpResponse.StatusCode} ReasonPhrase='{httpResponse.ReasonPhrase}' ResponsePayload='{responsePayload}' Request={requestString} This={this}");
             }
         }
 

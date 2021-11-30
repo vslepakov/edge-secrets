@@ -8,7 +8,7 @@ namespace EdgeSecrets.SecretManager
 
     public class InMemorySecretStore : SecretStoreBase
     {
-        private readonly SecretList _cachedSecrets = new();
+        private SecretList? _cachedSecrets = null;
 
         public InMemorySecretStore(
             ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, KeyOptions? keyOptions = null)
@@ -18,7 +18,7 @@ namespace EdgeSecrets.SecretManager
 
         protected override async Task ClearCacheInternalAsync(CancellationToken cancellationToken)
         {
-            _cachedSecrets?.Clear();
+            _cachedSecrets = null;
             await Task.FromResult(0);
         }
 
@@ -27,13 +27,40 @@ namespace EdgeSecrets.SecretManager
             return await Task.FromResult(_cachedSecrets?.GetSecret(secretName, version, date));
         }
 
-        protected override async Task<SecretList?> RetrieveSecretsFromSourceAsync(IList<Secret?>? secretNames, CancellationToken cancellationToken)
+        protected override async Task<SecretList?> RetrieveSecretListInternalAsync(IList<Secret?>? secrets, CancellationToken cancellationToken)
         {
-            return await Task.FromResult<SecretList?>(null);
+            SecretList? localSecrets = null;
+            if ((secrets != null) && (_cachedSecrets != null))
+            {
+                foreach(var secret in secrets)
+                {
+                    if (secret != null)
+                    {
+                        var cachedSecret = _cachedSecrets?.GetSecret(secret.Name, secret.Version);
+                        if (cachedSecret != null)
+                        {
+                            if (localSecrets == null)
+                            {
+                                localSecrets = new SecretList();
+                            }
+                            localSecrets.SetSecret(cachedSecret);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                localSecrets = _cachedSecrets;
+            }
+            return await Task.FromResult<SecretList?>(localSecrets);
         }
 
         protected override async Task StoreSecretInternalAsync(Secret secret, CancellationToken cancellationToken)
         {
+            if (_cachedSecrets == null)
+            {
+                _cachedSecrets = new();
+            }
             _cachedSecrets?.SetSecret(secret);
             await Task.FromResult(0);
         }
