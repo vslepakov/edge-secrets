@@ -1,6 +1,6 @@
 ﻿namespace SecretDeliveryApp;
 
-public record Secret(string Name, string Value, string Version, DateTime ExpirationDate, DateTime ActivationDate);
+public record Secret(string Name, string Value, string? Version, DateTime ExpirationDate, DateTime ActivationDate);
 
 public record NullSecret : Secret
 {

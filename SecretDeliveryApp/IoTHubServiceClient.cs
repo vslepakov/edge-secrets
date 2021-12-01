@@ -4,41 +4,40 @@ namespace SecretDeliveryApp;
 
 public class IoTHubServiceClient : IIoTHubServiceClient
 {
+    private const string IOT_HUB_CONNECTION_STRING = "IOT_HUB_CONNECTION_STRING";
     private readonly ServiceClient _serviceClient;
+    private readonly ILogger<IoTHubServiceClient> _logger;
 
-    public IoTHubServiceClient(ServiceClient serviceClient)
+    public IoTHubServiceClient(ILogger<IoTHubServiceClient> logger)
     {
-        _serviceClient = serviceClient;
+        var connString = Environment.GetEnvironmentVariable(IOT_HUB_CONNECTION_STRING);
+        _serviceClient = ServiceClient.CreateFromConnectionString(connString);
+        _logger = logger;
     }
 
-    public Task InvokeDeviceMethodAsync(string methodName, string payload, CancellationToken cancellation = default)
+    public async Task InvokeDeviceMethodAsync(string methodName, string deviceId, string moduleId, string payload, CancellationToken cancellation = default)
     {
-        throw new NotImplementedException();
+        var methodInvocation = new CloudToDeviceMethod(methodName)
+        {
+            ResponseTimeout = TimeSpan.FromSeconds(10),
+        };
 
-        //Console.WriteLine($"Invoking 'Start' dm on device '{this._deviceId}'...");
+        methodInvocation.SetPayloadJson(payload);
 
-        //this._runId = runId.ToString();
-
-        //var methodInvocation = new CloudToDeviceMethod("Start")
-        //{
-        //    ResponseTimeout = TimeSpan.FromSeconds(30),
-        //};
-
-        //var payload = new
-        //{
-        //    runId = runId,
-        //    config = config
-        //};
-
-        //methodInvocation.SetPayloadJson(JsonConvert.SerializeObject(payload));
-
-
-
-        //Console.WriteLine($"Run ID: {runId}");
-
-        //// Invoke the direct method asynchronously and get the response from the simulated device.
-        //var response = await this._serviceClient.InvokeDeviceMethodAsync(this._deviceId, this._transmitterModuleName, methodInvocation);
-
-        ////Console.WriteLine($"\nResponse status: {response.Status}, payload: {response.GetPayloadAsJson()}");
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            _logger.LogError("Cannot invoke direct method. DeviceID not specified!");
+            return;
+        }
+        else if (string.IsNullOrEmpty(moduleId))
+        {
+            var response = await _serviceClient.InvokeDeviceMethodAsync(deviceId, methodInvocation);
+            _logger.LogInformation($"Invoked direct method on device: {deviceId} with status: {response.Status} and response: {response.GetPayloadAsJson()}");
+        }
+        else
+        {
+            var response = await _serviceClient.InvokeDeviceMethodAsync(deviceId, moduleId, methodInvocation);
+            _logger.LogInformation($"Invoked direct method on device {deviceId} and module {moduleId} with status {response.Status} and response: {response.GetPayloadAsJson()}");
+        }
     }
 }

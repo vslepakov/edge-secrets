@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text;
 
 namespace SecretDeliveryApp
 {
@@ -39,9 +40,12 @@ namespace SecretDeliveryApp
                     if (IsEventValid(@event))
                     {
                         var request = GetRequestAndSubject(@event);
+
+                        _logger.LogInformation($"Received Secrets Request from subject {request.Item2}");
+
                         await ProcessRequestForDeviceAsync(request.Item1, request.Item2, cancellationToken);
 
-                        _logger.LogInformation($"Successfully processed Secrets Request for device {request.Item2}");
+                        _logger.LogInformation($"Successfully processed Secrets Request for subject {request.Item2}");
                     }
                 }
             }
@@ -73,13 +77,16 @@ namespace SecretDeliveryApp
             var response = new DeviceSecretResponse(request.RequestId, secrets);
             var responseAsJson = JsonConvert.SerializeObject(response);
 
-            await _iotHubServiceClient.InvokeDeviceMethodAsync(UpdateSecretsDirectMethodName, responseAsJson, cancellationToken);
+            var deviceAndModule = GetDeviceAndModuleIdFromSubject(subject);
+
+            await _iotHubServiceClient.InvokeDeviceMethodAsync(UpdateSecretsDirectMethodName, deviceAndModule.Item1, 
+                deviceAndModule.Item2, responseAsJson, cancellationToken);
         }
 
         private bool IsEventValid(JToken jToken)
         {
             return jToken["type"]?.ToString() == "Microsoft.Devices.DeviceTelemetry" && 
-                   jToken["properties"]!["secret-request-id"] != null;
+                   jToken["data"]!["properties"]!["secret-request-id"] != null;
         }
 
         private (DeviceSecretRequest, string) GetRequestAndSubject(JToken jToken)
@@ -87,9 +94,39 @@ namespace SecretDeliveryApp
             var body = jToken["data"]!["body"]!.ToString();
             var subject = jToken["subject"]!.ToString();
 
-            var request = JsonConvert.DeserializeObject<DeviceSecretRequest>(body!);
+            if (IsBase64String(body))
+            {
+                var decodedBody = Convert.FromBase64String(body);
+                body = Encoding.UTF8.GetString(decodedBody);
+            }
+
+            var request = JsonConvert.DeserializeObject<DeviceSecretRequest>(body);
 
             return (request!, subject!);
+        }
+
+        private (string, string) GetDeviceAndModuleIdFromSubject(string subject)
+        {
+            var parts = subject.Split('/');
+
+            if (parts.Length == 4)
+            {
+                return (parts[1], parts[3]);
+            }
+            else if (parts.Length == 2)
+            {
+                return (parts[1], string.Empty);
+            }
+            else
+            {
+                return (string.Empty, string.Empty);
+            }
+        }
+
+        public static bool IsBase64String(string base64)
+        {
+            var buffer = new Span<byte>(new byte[base64.Length]);
+            return Convert.TryFromBase64String(base64, buffer, out _);
         }
     }
 }

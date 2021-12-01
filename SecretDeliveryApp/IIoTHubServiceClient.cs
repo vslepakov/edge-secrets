@@ -2,5 +2,5 @@
 
 public interface IIoTHubServiceClient
 {
-    Task InvokeDeviceMethodAsync(string methodName, string payload, CancellationToken cancellation = default);
+    Task InvokeDeviceMethodAsync(string methodName, string deviceId, string moduleId, string payload, CancellationToken cancellation = default);
 }

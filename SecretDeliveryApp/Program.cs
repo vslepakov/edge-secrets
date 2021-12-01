@@ -8,6 +8,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<SecretRequestProcessor>();
 builder.Services.AddScoped<ISecretProvider, AzureKeyVaultClient>();
+builder.Services.AddScoped<IIoTHubServiceClient, IoTHubServiceClient>();
 
 var app = builder.Build();
 
