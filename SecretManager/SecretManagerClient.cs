@@ -1,52 +1,57 @@
 ﻿namespace EdgeSecrets.SecretManager
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
-    using EdgeSecrets.CryptoProvider;
 
     public class SecretManagerClient
     {
-        private ISecretStore _localSecretStore;
-        private ISecretStore _remoteSecretStore;
-        private ICryptoProvider _cryptoProvider;
-        private string _keyId;
+        private readonly ISecretStore _secretStore;
 
-        public SecretManagerClient(ICryptoProvider cryptoProvider, string keyId, ISecretStore secretStore)
+        public SecretManagerClient(ISecretStore secretStore)
         {
-            _localSecretStore = secretStore;
-            _cryptoProvider = cryptoProvider;
-            _keyId = keyId;
+            _secretStore = secretStore;
         }
 
-        public SecretManagerClient(ICryptoProvider cryptoProvider, string keyId, ISecretStore localSecretStore, ISecretStore remoteSecretStore) 
-            : this(cryptoProvider, keyId, localSecretStore)
+        public async Task ClearCacheAsync(CancellationToken cancellationToken = default)
         {
-            _remoteSecretStore = remoteSecretStore;
+            await _secretStore.ClearCacheAsync(cancellationToken);
         }
 
-        public async Task<string> GetSecretValueAsync(string name)
+        public async Task<Secret?> GetSecretAsync(string name, string? version, DateTime? date, CancellationToken cancellationToken = default)
         {
-            var secret = await _localSecretStore.GetSecretAsync(name);
-            if (secret != null)
+            return await _secretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
+        }
+
+        public async Task<string?> GetSecretValueAsync(string name, string? version, DateTime? date, CancellationToken cancellationToken = default)
+        {
+            var secret = await _secretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
+            return secret?.Value;
+        }
+
+        public async Task<SecretList?> RetrieveSecretListAsync(IList<string> secretNames, CancellationToken cancellationToken = default)
+        {
+            List<Secret?>? secrets = new();
+            foreach (var secretName in secretNames)
             {
-                return await _cryptoProvider.DecryptAsync(secret.Value, _keyId);
+                secrets.Add(new Secret(secretName));
             }
-            return null;
+            return await _secretStore.RetrieveSecretListAsync(secrets, cancellationToken);
         }
 
-        public async Task SetSecretValueAsync(string name, string plainText)
+        public async Task SetSecretValueAsync(string name, string plainText, string? version = null, CancellationToken cancellationToken = default)
         {
-            string encryptedValue = await _cryptoProvider.EncryptAsync(plainText, _keyId);
-            var secret = await _localSecretStore.GetSecretAsync(name);
+            Secret? secret = await _secretStore.RetrieveSecretAsync(name, version, DateTime.UtcNow, cancellationToken);
             if (secret != null)
             {
-                secret = secret with { Value = encryptedValue };
+                secret = secret with { Value = plainText };
             }
             else
             {
-                secret = new Secret() { Name = name, Value = encryptedValue };
+                secret = new Secret(name, plainText);
             }
-
-            await _localSecretStore.SetSecretAsync(name, secret);
+            await _secretStore.StoreSecretAsync(secret, cancellationToken);
         }
     }
 }

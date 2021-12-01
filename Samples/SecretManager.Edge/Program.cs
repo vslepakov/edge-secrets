@@ -64,7 +64,6 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             string INIT_VECTOR = Environment.GetEnvironmentVariable("EDGESECRET_INIT_VECTOR");
 
             ICryptoProvider cryptoProvider;
-            KeyOptions kms;
             switch (CRYPTO_PROVIDER)
             {
                 default:
@@ -82,9 +81,9 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
                     break;
             }; 
 
-            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
+            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", null, cryptoProvider, KEY_ID);
             ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, KEY_ID, secretStore);
+            var manager = new SecretManagerClient(secretStore);
             Console.WriteLine($"EdgeSecret test using Crypto Provider {cryptoProvider}");
 
             string keyA = "test";
