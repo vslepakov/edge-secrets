@@ -6,8 +6,14 @@
 
     public class WorkloadApiCryptoProvider : ICryptoProvider
     {
-        private string _initializationVector="0123456789"; // TO DO: hardcoded for now.  
-        private readonly SecurityDaemonClient _securityDaemonClient;
+        private readonly string _initializationVector;
+        private readonly string _defaultInitializationVector = "0123456789"; // TO DO: hardcoded for now.  
+        readonly SecurityDaemonClient _securityDaemonClient = new SecurityDaemonClient();
+
+        public WorkloadApiCryptoProvider(string initializationVector = null)
+        {
+            _initializationVector = initializationVector ?? _defaultInitializationVector;
+        }
 
         public WorkloadApiCryptoProvider()
         {

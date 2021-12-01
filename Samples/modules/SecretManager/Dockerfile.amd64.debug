@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/runtime:5.0 AS base
+FROM mcr.microsoft.com/dotnet/runtime:6.0 AS base
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends unzip procps && \
@@ -12,15 +12,15 @@ RUN useradd -ms /bin/bash moduleuser
 USER moduleuser
 RUN curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l ~/vsdbg
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
 
 COPY . ./
-RUN dotnet restore Samples/SecretManager.Edge/*.csproj
-RUN dotnet publish Samples/SecretManager.Edge/*.csproj -c Debug -o out
+RUN dotnet restore Samples/SecretManager.Edge.Module/*.csproj
+RUN dotnet publish Samples/SecretManager.Edge.Module/*.csproj -c Debug -o out
 
 FROM base
 WORKDIR /app
 COPY --from=build-env /app/out ./
 
-ENTRYPOINT ["dotnet", "SecretManager.Edge.dll"]
+ENTRYPOINT ["dotnet", "SecretManager.Edge.Module.dll"]

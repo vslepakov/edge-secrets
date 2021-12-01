@@ -1,5 +1,6 @@
 ﻿namespace Tests.SecretManagerTests
 {
+    using System;
     using System.Threading.Tasks;
     using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
@@ -15,14 +16,14 @@
 
             var cryptoProvider = new TestCryptoProvider();
 
-            ISecretStore fileSecretStore = new FileSecretStore("secrets.json");
+            ISecretStore fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider);
             ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, "", secretStore);
+            var manager = new SecretManagerClient(secretStore);
 
             // Act
             string key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            string value = await manager.GetSecretValueAsync(key);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -40,14 +41,16 @@
             const string KEY_ID = "https://mvsdev3kv.vault.azure.net/keys/kms-key/2da6c35f4fe34496a5078b9a9983f042";
 
             var cryptoProvider = new AzureKeyVaultCryptoProvider();
-            var fileSecretStore = new FileSecretStore("secrets.json");
+
+            var fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, KEY_ID);
             var secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, KEY_ID, secretStore);
+            var manager = new SecretManagerClient(secretStore);
+            await fileSecretStore.ClearCacheAsync(default);
 
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));
@@ -61,19 +64,21 @@
             const string PLAINTEXT = "Hello World";
 
             // Create the key first e.g., like this:
-            // curl -X POST -H 'Content-Type: application/json' -d '{"keyId": "mysymmtestkey", "usage": "encrypt"}' \
+            // curl -X POST -H 'Content-Type: application/json' -d '{"keyId": "mytestkey", "preferredAlgorithms": "rsa-2048"}' \
             // --unix-socket /run/aziot/keyd.sock http://keyd.sock/keypair?api-version=2020-09-01
             const string KEY_ID = "mysymmtestkey";
 
             var cryptoProvider = new IdentityServiceCryptoProvider();
-            var fileSecretStore = new FileSecretStore("secrets.json");
+
+            var fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, KEY_ID);
             var secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(cryptoProvider, KEY_ID, secretStore);
+            var manager = new SecretManagerClient(secretStore);
+            await fileSecretStore.ClearCacheAsync(default);
 
             // Act
             var key = "testKey";
             await manager.SetSecretValueAsync(key, PLAINTEXT);
-            var value = await manager.GetSecretValueAsync(key);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(value));

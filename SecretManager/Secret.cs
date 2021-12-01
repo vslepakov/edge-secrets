@@ -4,14 +4,21 @@ namespace EdgeSecrets.SecretManager
 
     public record class Secret
     {
-        public string Name { get; set; }
+        public string Name { get; }
+        public string? Value { get; init; }
+        public string? Version { get; init; } = default;
+        public DateTime ActivationDate { get; init; } = DateTime.MinValue;
+        public DateTime ExpirationDate { get; init; } = DateTime.MaxValue;
 
-        public string Value { get; set; }
+        public Secret(string name, string? value = null)
+        {
+            Name = name;
+            Value = value;
+        }
 
-        public string Version { get; set; }
-
-        public DateTime ActivationDate {get; set; } = DateTime.MinValue;
-
-        public DateTime ExpirationDate { get; set; } = DateTime.MaxValue;
+        public bool DateIsActive(DateTime? date)
+        {
+            return ((date != null) && (date >= ActivationDate) && (date < ExpirationDate));
+        }
     }
 }

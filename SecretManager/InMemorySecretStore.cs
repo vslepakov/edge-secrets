@@ -1,40 +1,79 @@
 namespace EdgeSecrets.SecretManager
 {
+    using System;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
+    using EdgeSecrets.CryptoProvider;
 
-    public class InMemorySecretStore : ISecretStore
+    public class InMemorySecretStore : SecretStoreBase
     {
-        private ISecretStore _internalSecretStore;
-        private IDictionary<string, Secret> _cachedSecrets = new Dictionary<string, Secret>();
+        private SecretList? _cachedSecrets = null;
 
-
-        public InMemorySecretStore(ISecretStore secretStore = null)
+        public InMemorySecretStore(
+            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            : base(secretStore, cryptoProvider, keyId)
         {
-            _internalSecretStore = secretStore;
         }
 
-        public async Task<Secret> GetSecretAsync(string name)
+        protected override async Task ClearCacheInternalAsync(CancellationToken cancellationToken)
         {
-            Secret value = null;
-            if (!_cachedSecrets.TryGetValue(name, out value))
+            _cachedSecrets = null;
+            await Task.FromResult(0);
+        }
+
+        protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
+        {
+            return await Task.FromResult(_cachedSecrets?.GetSecret(secretName, version, date));
+        }
+
+        protected override async Task<SecretList?> RetrieveSecretListInternalAsync(IList<Secret?>? secrets, CancellationToken cancellationToken)
+        {
+            SecretList? localSecrets = null;
+            if ((secrets != null) && (_cachedSecrets != null))
             {
-                if (_internalSecretStore != null)
+                foreach(var secret in secrets)
                 {
-                    value = await _internalSecretStore.GetSecretAsync(name);
-                    _cachedSecrets[name] = value;
+                    if (secret != null)
+                    {
+                        var cachedSecret = _cachedSecrets?.GetSecret(secret.Name, secret.Version);
+                        if (cachedSecret != null)
+                        {
+                            if (localSecrets == null)
+                            {
+                                localSecrets = new SecretList();
+                            }
+                            localSecrets.SetSecret(cachedSecret);
+                        }
+                    }
                 }
             }
-            return value;
+            else
+            {
+                localSecrets = _cachedSecrets;
+            }
+            return await Task.FromResult<SecretList?>(localSecrets);
         }
 
-        public async Task SetSecretAsync(string name, Secret value)
+        protected override async Task StoreSecretInternalAsync(Secret secret, CancellationToken cancellationToken)
         {
-            if (_internalSecretStore != null)
+            if (_cachedSecrets == null)
             {
-                await _internalSecretStore.SetSecretAsync(name, value);
+                _cachedSecrets = new();
             }
-            _cachedSecrets[name] = value;
+            _cachedSecrets?.SetSecret(secret);
+            await Task.FromResult(0);
+        }
+
+        protected override async Task MergeSecretListInternalAsync(SecretList secretList, CancellationToken cancellationToken)
+        {
+            foreach (var secretVersions in secretList.Values)
+            {
+                foreach (var secret in secretVersions.Values)
+                {
+                    await StoreSecretInternalAsync(secret, cancellationToken);
+                }
+            }
         }
     }
 }
