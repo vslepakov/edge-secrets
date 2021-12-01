@@ -1,4 +1,4 @@
-﻿namespace Tests
+﻿namespace Tests.SecretManagerTests
 {
     using System;
     using System.Threading.Tasks;

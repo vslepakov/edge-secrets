@@ -64,6 +64,13 @@ else
   containerAppEnvironmentId=$9
 fi
 
+if [ -z "${10}" ]; then
+  echo "No IoT Hub Connection String provided"
+  exit 10
+else
+  iotHubConnectionString=${10}
+fi
+
 az deployment group create -n app-deployment -g ${rg} \
   --template-file ./modules/secretDeliveryApp.bicep \
   -p containerRegistry=${containerRegistry} \
@@ -74,6 +81,7 @@ az deployment group create -n app-deployment -g ${rg} \
      applicationId=${applicationId} \
      applicationSecret=${applicationSecret} \
      webHookApiKey=${webHookApiKey} \
-     keyVaultUrl=${keyVaultUrl}
+     keyVaultUrl=${keyVaultUrl} \
+     iotHubConnectionString=${iotHubConnectionString}
 
 echo "DONE!"

@@ -16,6 +16,9 @@ param applicationSecret string
 @secure()
 param webHookApiKey string
 
+@secure()
+param iotHubConnectionString string
+
 // TODO add Dapr
 resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
   name: name
@@ -29,6 +32,10 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
         {
           name: 'webhook-api-key'
           value: webHookApiKey
+        }
+        {
+          name: 'iothub-connectionstring'
+          value: iotHubConnectionString
         }
         {
           name: 'application-clientid'
@@ -72,6 +79,10 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
             {
               name: 'AZURE_CLIENT_SECRET'
               secretref: 'application-client-secret'
+            }
+            {
+              name: 'IOT_HUB_CONNECTION_STRING'
+              secretref: 'iothub-connectionstring'
             }
             {
               name: 'AZURE_TENANT_ID'

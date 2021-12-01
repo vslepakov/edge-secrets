@@ -48,6 +48,16 @@ module k8senv 'modules/k8senv.bicep' = {
   }
 }
 
+resource iotHub 'Microsoft.Devices/IotHubs@2021-07-01' = {
+  name: '${uniqueString(resourceGroup().id)}-iothub'
+  location: location
+  sku: {
+    capacity: 1
+    name: 'S1'
+  }
+  properties: {}
+}
+
 module secretDeliveryApp 'modules/secretDeliveryApp.bicep' = {
   name: 'secretDeliveryApp'
   params: {
@@ -62,18 +72,62 @@ module secretDeliveryApp 'modules/secretDeliveryApp.bicep' = {
     containerAppEnvironmentId: k8senv.outputs.k8senvId
     webHookApiKey: webHookApiKey
     keyVaultUrl: 'https://${keyVault.name}${environment().suffixes.keyvaultDns}'
+    iotHubConnectionString: 'HostName=${iotHub.name}.azure-devices.net;SharedAccessKeyName=${listKeys(iotHub.id, '2020-04-01').value[1].keyName};SharedAccessKey=${listKeys(iotHub.id, '2020-04-01').value[1].primaryKey}'
   }
 }
 
-module iotHub 'modules/iothub_with_eventgrid_webhook.bicep' = {
-  name: 'iothub-with-eventgrid'
+resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2021-06-01-preview' = {
+  name: '${uniqueString(resourceGroup().id)}-iothubtopic'
+  location: location
+  properties: {
+    source: iotHub.id
+    topicType: 'Microsoft.Devices.IotHubs'
+  }
+}
+
+resource symbolicname 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-06-01-preview' = {
+  name: '${uniqueString(resourceGroup().id)}-iothubtopic-subscription'
   dependsOn: [
     secretDeliveryApp
   ]
-  params: {
-    location: location
-    webHookApiKey: webHookApiKey
-    webHookUrl: 'https://${secretDeliveryApp.outputs.fqdn}/events'
+  parent: eventGridTopic
+  properties: {
+    destination: {
+      endpointType: 'WebHook'
+      properties: {
+        // Securing access using an API Key for now. Later use AAD.
+        deliveryAttributeMappings: [
+          {
+            name: 'X-API-KEY'
+            type: 'Static'
+            properties: {
+              value: webHookApiKey
+              isSecret: true
+            }
+          }
+        ]
+        endpointUrl: 'https://${secretDeliveryApp.outputs.fqdn}/events'
+        maxEventsPerBatch: 5
+        preferredBatchSizeInKilobytes: 64
+      }
+    }
+    eventDeliverySchema: 'CloudEventSchemaV1_0'
+    filter: {
+      advancedFilters: [
+        {
+          operatorType: 'IsNotNull'
+          key: 'data.properties.secret-request-id'
+        }
+      ]
+      enableAdvancedFilteringOnArrays: true
+      includedEventTypes: [
+        'Microsoft.Devices.DeviceTelemetry'
+      ]
+    }
+    retryPolicy: {
+      eventTimeToLiveInMinutes: 5
+      maxDeliveryAttempts: 10
+    }
   }
 }
 
