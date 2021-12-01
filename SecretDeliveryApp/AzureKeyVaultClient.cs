@@ -19,7 +19,7 @@ public class AzureKeyVaultClient : ISecretProvider
         _secretClient = new SecretClient(new Uri(keyVaultUrl), new EnvironmentCredential());
     }
 
-    public async Task<Secret> GetSecretAsync(string secretName, string? secretVersion = null)
+    public async Task<Secret> GetSecretAsync(string secretName, string? secretVersion = null, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation($"Getting secret {secretName}!");
 
@@ -30,8 +30,10 @@ public class AzureKeyVaultClient : ISecretProvider
             var secretValue = kvSecret.Value;
             var secretProps = secretValue.Properties;
 
-            return new Secret(secretValue.Id, secretValue.Name, secretValue.Value, 
-                secretProps.Version, secretProps.ExpiresOn, secretProps.NotBefore);
+            var expirationDate = secretProps.ExpiresOn != null ? secretProps.ExpiresOn.Value.DateTime : DateTime.MaxValue;
+            var activationDate = secretProps.NotBefore != null ? secretProps.NotBefore.Value.DateTime : DateTime.MinValue;
+
+            return new Secret(secretValue.Name, secretValue.Value, secretProps.Version, expirationDate, activationDate);
         }
         else
         {

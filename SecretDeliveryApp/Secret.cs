@@ -1,13 +1,13 @@
 ﻿namespace SecretDeliveryApp;
 
-public record Secret(Uri Id, string Name, string Value, string Version, DateTimeOffset? ExpiresOn, DateTimeOffset? NotBefore);
+public record Secret(string Name, string Value, string Version, DateTime ExpirationDate, DateTime ActivationDate);
 
 public record NullSecret : Secret
 {
-    private static NullSecret _instance = new(new Uri("http://localhost"), "", "", "", null, null);
+    private static NullSecret _instance = new("", "", "", DateTime.MaxValue, DateTime.MinValue);
 
-    public NullSecret(Uri Id, string Name, string Value, string Version, DateTimeOffset? ExpiresOn, DateTimeOffset? NotBefore)
-        : base(Id, Name, Value, Version, ExpiresOn, NotBefore)
+    public NullSecret(string Name, string Value, string Version, DateTime ExpirationDate, DateTime ActivationDate)
+        : base(Name, Value, Version, ExpirationDate, ActivationDate)
     {
     }
 

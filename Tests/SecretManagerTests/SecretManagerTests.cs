@@ -1,4 +1,4 @@
-﻿namespace Tests
+﻿namespace Tests.SecretManagerTests
 {
     using System.Threading.Tasks;
     using EdgeSecrets.CryptoProvider;
