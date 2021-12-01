@@ -9,14 +9,14 @@ namespace EdgeSecrets.SecretManager
     public abstract class SecretStoreBase : ISecretStore
     {
         private readonly ICryptoProvider? _cryptoProvider;
-        private readonly KeyOptions? _keyOptions;
+        private readonly string? _keyId;
         private readonly ISecretStore? _internalSecretStore;
 
         public SecretStoreBase(
-            ISecretStore? secretStore = null, ICryptoProvider ? cryptoProvider = null, KeyOptions? keyOptions = null)
+            ISecretStore? secretStore = null, ICryptoProvider ? cryptoProvider = null, string? keyId = default)
         {
             _cryptoProvider = cryptoProvider;
-            _keyOptions = keyOptions;
+            _keyId = keyId;
             _internalSecretStore = secretStore;
         }
 
@@ -67,7 +67,7 @@ namespace EdgeSecrets.SecretManager
             {
                 if (_cryptoProvider != null)
                 {
-                    secret = secret with { Value = await _cryptoProvider.DecryptAsync(secret.Value, _keyOptions, cancellationToken) };
+                    secret = secret with { Value = await _cryptoProvider.DecryptAsync(secret.Value, _keyId, cancellationToken) };
                 }
             }
             else
@@ -80,7 +80,7 @@ namespace EdgeSecrets.SecretManager
                         Secret? storeSecret;
                         if (_cryptoProvider != null)
                         {
-                            storeSecret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyOptions, cancellationToken) };
+                            storeSecret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyId, cancellationToken) };
                         }
                         else
                         {
@@ -121,7 +121,7 @@ namespace EdgeSecrets.SecretManager
                     {
                         foreach (var secret in secretVersions.Values)
                         {
-                            var decryptedSecret = secret with { Value = await _cryptoProvider.DecryptAsync(secret.Value, _keyOptions, cancellationToken) };
+                            var decryptedSecret = secret with { Value = await _cryptoProvider.DecryptAsync(secret.Value, _keyId, cancellationToken) };
                             decryptedSecretList.SetSecret(decryptedSecret);
                         }
                     }
@@ -143,7 +143,7 @@ namespace EdgeSecrets.SecretManager
                             {
                                 foreach (var secret in secretVersions.Values)
                                 {
-                                    var encryptedSecret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyOptions, cancellationToken) };
+                                    var encryptedSecret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyId, cancellationToken) };
                                     storeSecretList.SetSecret(encryptedSecret);
                                 }
                             }
@@ -187,7 +187,7 @@ namespace EdgeSecrets.SecretManager
             // Add secret to cached secret list
             if (_cryptoProvider != null)
             {
-                secret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyOptions, cancellationToken) };
+                secret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyId, cancellationToken) };
             }
             await StoreSecretInternalAsync(secret, cancellationToken);
         }

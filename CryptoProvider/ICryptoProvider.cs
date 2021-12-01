@@ -17,7 +17,7 @@
         /// Decrypts data.
         /// </summary>
         /// <param name="ciphertext">Encoded data to be decrypted.</param>
-        /// <param name="keyOptions">ID of the key to use</param>
+        /// <param name="keyId">ID of the key to use</param>
         /// <returns>Decrypted data.</returns>
         Task<string> DecryptAsync(string ciphertext, string keyId, CancellationToken ct = default);
     }

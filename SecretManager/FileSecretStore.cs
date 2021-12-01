@@ -13,8 +13,8 @@ namespace EdgeSecrets.SecretManager
         private readonly string _fileName;
 
         public FileSecretStore(string fileName,
-            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, KeyOptions? keyOptions = null)
-            : base(secretStore, cryptoProvider, keyOptions)
+            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            : base(secretStore, cryptoProvider, keyId)
         {
             _fileName = fileName;
         }

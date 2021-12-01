@@ -60,7 +60,7 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
 
         static async Task GetSecrets()
         {
-            (ICryptoProvider? cryptoProvider, KeyOptions? keyOptions) = Configuration.GetCryptoProvider();
+            (ICryptoProvider? cryptoProvider, string? keyId) = Configuration.GetCryptoProvider();
             Console.WriteLine($"Using Crypto Provider {cryptoProvider?.GetType()}");
 
             //// Get from file
@@ -72,7 +72,7 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
             //// Get from remote
 
             ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
-            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", remoteSecretStore, cryptoProvider, keyOptions);
+            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", remoteSecretStore, cryptoProvider, keyId);
             ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
             var manager = new SecretManagerClient(secretStore);
             

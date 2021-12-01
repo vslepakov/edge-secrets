@@ -24,8 +24,8 @@ namespace EdgeSecrets.SecretManager.Edge
         private Dictionary<string, PendingRequest> _pendingRequests = new();
 
         public RemoteSecretStore(TransportType transportType, ClientOptions? clientOptions = default,
-            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, KeyOptions? keyOptions = null)
-            : base(secretStore, cryptoProvider, keyOptions)
+            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            : base(secretStore, cryptoProvider, keyId)
         {
             _transportType = transportType;
             _clientOptions = clientOptions;
