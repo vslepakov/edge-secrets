@@ -8,12 +8,30 @@ namespace EdgeSecrets.SecretManager
     using System.Threading.Tasks;
     using EdgeSecrets.CryptoProvider;
 
+    public static class FileSecretStoreExtensions
+    {
+        public static SecretManagerClient WithFileSecretStore(this SecretManagerClient client,
+            string fileName,
+            ICryptoProvider? cryptoProvider = null, string? keyId = default)
+        {
+            var secretStore = new FileSecretStore(fileName, client.SecretStore, cryptoProvider, keyId);
+            client.SecretStore = secretStore;
+            return client;
+        }
+    }
+
     public class FileSecretStore : SecretStoreBase
     {
         private readonly string _fileName;
 
         public FileSecretStore(string fileName,
-            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            : this(fileName, null, cryptoProvider, keyId)
+        {
+        }
+
+        public FileSecretStore(string fileName,
+            ISecretStore? secretStore, ICryptoProvider? cryptoProvider = null, string? keyId = default)
             : base(secretStore, cryptoProvider, keyId)
         {
             _fileName = fileName;

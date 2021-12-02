@@ -7,51 +7,69 @@
 
     public class SecretManagerClient
     {
-        private readonly ISecretStore _secretStore;
+        public ISecretStore? SecretStore { get; set; }
 
-        public SecretManagerClient(ISecretStore secretStore)
+        public SecretManagerClient(ISecretStore? secretStore = null)
         {
-            _secretStore = secretStore;
+            SecretStore = secretStore;
         }
 
         public async Task ClearCacheAsync(CancellationToken cancellationToken = default)
         {
-            await _secretStore.ClearCacheAsync(cancellationToken);
+            if (SecretStore != null)
+            {
+                await SecretStore.ClearCacheAsync(cancellationToken);
+            }
         }
 
         public async Task<Secret?> GetSecretAsync(string name, string? version, DateTime? date, CancellationToken cancellationToken = default)
         {
-            return await _secretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
+            if (SecretStore != null)
+            {
+                return await SecretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
+            }
+            return null;
         }
 
         public async Task<string?> GetSecretValueAsync(string name, string? version, DateTime? date, CancellationToken cancellationToken = default)
         {
-            var secret = await _secretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
-            return secret?.Value;
+            if (SecretStore != null)
+            {
+                var secret = await SecretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
+                return secret?.Value;
+            }
+            return null;
         }
 
         public async Task<SecretList?> RetrieveSecretListAsync(IList<string> secretNames, CancellationToken cancellationToken = default)
         {
-            List<Secret?>? secrets = new();
-            foreach (var secretName in secretNames)
+            if (SecretStore != null)
             {
-                secrets.Add(new Secret(secretName));
+                List<Secret?>? secrets = new();
+                foreach (var secretName in secretNames)
+                {
+                    secrets.Add(new Secret(secretName));
+                }
+                return await SecretStore.RetrieveSecretListAsync(secrets, cancellationToken);
             }
-            return await _secretStore.RetrieveSecretListAsync(secrets, cancellationToken);
+            return null;
         }
 
         public async Task SetSecretValueAsync(string name, string plainText, string? version = null, CancellationToken cancellationToken = default)
         {
-            Secret? secret = await _secretStore.RetrieveSecretAsync(name, version, DateTime.UtcNow, cancellationToken);
-            if (secret != null)
+            if (SecretStore != null)
             {
-                secret = secret with { Value = plainText };
+                Secret? secret = await SecretStore.RetrieveSecretAsync(name, version, DateTime.UtcNow, cancellationToken);
+                if (secret != null)
+                {
+                    secret = secret with { Value = plainText };
+                }
+                else
+                {
+                    secret = new Secret(name, plainText);
+                }
+                await SecretStore.StoreSecretAsync(secret, cancellationToken);
             }
-            else
-            {
-                secret = new Secret(name, plainText);
-            }
-            await _secretStore.StoreSecretAsync(secret, cancellationToken);
         }
     }
 }

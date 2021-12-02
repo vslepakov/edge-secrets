@@ -9,6 +9,18 @@ namespace EdgeSecrets.SecretManager.Edge
     using Microsoft.Azure.Devices.Client;
     using EdgeSecrets.CryptoProvider;
 
+    public static class RemoteSecretStoreExtensions
+    {
+        public static SecretManagerClient WithRemoteSecretStore(this SecretManagerClient client,
+            TransportType transportType, ClientOptions clientOptions,
+            ICryptoProvider? cryptoProvider = null, string? keyId = default)
+        {
+            var secretStore = new RemoteSecretStore(transportType, clientOptions, client.SecretStore, cryptoProvider, keyId);
+            client.SecretStore = secretStore;
+            return client;
+        }
+    }
+
     public class RemoteSecretStore : SecretStoreBase
     {
         public record PendingRequest
@@ -23,8 +35,14 @@ namespace EdgeSecrets.SecretManager.Edge
         private ModuleClient? _moduleClient = null;
         private Dictionary<string, PendingRequest> _pendingRequests = new();
 
-        public RemoteSecretStore(TransportType transportType, ClientOptions? clientOptions = default,
-            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, string? keyId = default)
+        public RemoteSecretStore(TransportType transportType, ClientOptions clientOptions,
+            ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            : this(transportType, clientOptions, null, cryptoProvider, keyId)
+        {
+        }
+
+        public RemoteSecretStore(TransportType transportType, ClientOptions clientOptions,
+            ISecretStore? secretStore, ICryptoProvider? cryptoProvider = null, string? keyId = default)
             : base(secretStore, cryptoProvider, keyId)
         {
             _transportType = transportType;

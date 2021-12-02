@@ -16,9 +16,9 @@
 
             var cryptoProvider = new TestCryptoProvider();
 
-            ISecretStore fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider);
-            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);
+            var manager = new SecretManagerClient()
+                .WithFileSecretStore("secrets.json", cryptoProvider)
+                .WithInMemorySecretStore();
 
             // Act
             string key = "testKey";
@@ -42,10 +42,10 @@
 
             var cryptoProvider = new AzureKeyVaultCryptoProvider();
 
-            var fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, KEY_ID);
-            var secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);
-            await fileSecretStore.ClearCacheAsync(default);
+            var manager = new SecretManagerClient()
+                .WithFileSecretStore("secrets.json", cryptoProvider, KEY_ID)
+                .WithInMemorySecretStore();
+            await manager.ClearCacheAsync();
 
             // Act
             var key = "testKey";
@@ -70,10 +70,11 @@
 
             var cryptoProvider = new IdentityServiceCryptoProvider();
 
-            var fileSecretStore = new FileSecretStore("secrets.json", null, cryptoProvider, KEY_ID);
-            var secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);
-            await fileSecretStore.ClearCacheAsync(default);
+            var manager = new SecretManagerClient()
+                .WithFileSecretStore("secrets.json", cryptoProvider, KEY_ID)
+                .WithInMemorySecretStore();
+            await manager.ClearCacheAsync();
+
 
             // Act
             var key = "testKey";

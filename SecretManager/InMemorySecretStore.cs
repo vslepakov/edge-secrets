@@ -6,12 +6,29 @@ namespace EdgeSecrets.SecretManager
     using System.Threading.Tasks;
     using EdgeSecrets.CryptoProvider;
 
+    public static class InMemorySecretStoreExtensions
+    {
+        public static SecretManagerClient WithInMemorySecretStore(this SecretManagerClient client,
+            ICryptoProvider? cryptoProvider = null, string? keyId = default)
+        {
+            var secretStore = new InMemorySecretStore(client.SecretStore, cryptoProvider, keyId);
+            client.SecretStore = secretStore;
+            return client;
+        }
+    }
+
     public class InMemorySecretStore : SecretStoreBase
     {
         private SecretList? _cachedSecrets = null;
 
         public InMemorySecretStore(
-            ISecretStore? secretStore = null, ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            : this(null, cryptoProvider, keyId)
+        {
+        }
+
+        public InMemorySecretStore(
+            ISecretStore? secretStore, ICryptoProvider? cryptoProvider = null, string? keyId = default)
             : base(secretStore, cryptoProvider, keyId)
         {
         }

@@ -63,18 +63,20 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
             (ICryptoProvider? cryptoProvider, string? keyId) = Configuration.GetCryptoProvider();
             Console.WriteLine($"Using Crypto Provider {cryptoProvider?.GetType()}");
 
+            string secretsFile = "/usr/local/cache/secrets.json";
+
             //// Get from file
 
-            // ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
-            // ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            // var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            // var manager = new SecretManagerClient()
+            //     .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
+            //     .WithInMemoryStore();
 
             //// Get from remote
 
-            ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
-            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", remoteSecretStore, cryptoProvider, keyId);
-            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);
+            var manager = new SecretManagerClient()
+                .WithRemoteSecretStore(TransportType.Amqp_Tcp_Only, new ClientOptions())
+                .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
+                .WithInMemorySecretStore();
             
             //// Test the secret store
 
