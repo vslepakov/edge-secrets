@@ -58,9 +58,10 @@ namespace EdgeSecrets.SecretManager
         /// <param name="secretName">Name of the secret to retrieve.</param>
         /// <param name="version">Name of the version to retrieve.</param>
         /// <param name="date">Timestamp where the secret should be valid (between activation and expiration).</param>
+        /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Secret found (with decrypted value) or null if not found.</returns>
-        public async Task<Secret?> RetrieveSecretAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
+        public async Task<Secret?> RetrieveSecretAsync(string secretName, string? version, DateTime? date, bool forceRetrieve, CancellationToken cancellationToken)
         {
             var secret = await RetrieveSecretInternalAsync(secretName, version, date, cancellationToken);
             if (secret != null)
@@ -74,7 +75,7 @@ namespace EdgeSecrets.SecretManager
             {
                 if (_internalSecretStore != null)
                 {
-                    secret = await _internalSecretStore.RetrieveSecretAsync(secretName, version, date, cancellationToken);
+                    secret = await _internalSecretStore.RetrieveSecretAsync(secretName, version, date, forceRetrieve, cancellationToken);
                     if (secret != null)
                     {
                         Secret? storeSecret;
@@ -107,9 +108,10 @@ namespace EdgeSecrets.SecretManager
         /// Retrieve list of secrets by name from the implemented or internal secret store.
         /// </summary>
         /// <param name="secrets">List of secrets to retrieve.</param>
+        /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<SecretList?> RetrieveSecretListAsync(IList<Secret?>? secrets, CancellationToken cancellationToken)
+        public async Task<SecretList?> RetrieveSecretListAsync(IList<Secret?>? secrets, bool forceRetrieve, CancellationToken cancellationToken)
         {
             SecretList? secretList = await RetrieveSecretListInternalAsync(secrets, cancellationToken);
             if (secretList != null)
@@ -132,7 +134,7 @@ namespace EdgeSecrets.SecretManager
             {
                 if (_internalSecretStore != null)
                 {
-                    secretList = await _internalSecretStore.RetrieveSecretListAsync(secrets, cancellationToken);
+                    secretList = await _internalSecretStore.RetrieveSecretListAsync(secrets, forceRetrieve, cancellationToken);
                     if (secretList != null)
                     {
                         SecretList? storeSecretList;

@@ -1,6 +1,5 @@
 namespace EdgeSecrets.SecretManager.Edge
 {
-    using System;
     using System.Collections.Generic;
     using EdgeSecrets.SecretManager;
 
