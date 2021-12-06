@@ -16,11 +16,11 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
 
 COPY . ./
-RUN dotnet restore Samples/SecretManager.Edge.Module/*.csproj
-RUN dotnet publish Samples/SecretManager.Edge.Module/*.csproj -c Debug -o out
+RUN dotnet restore Samples/SecretManager.Edge/*.csproj
+RUN dotnet publish Samples/SecretManager.Edge/*.csproj -c Debug -o out
 
 FROM base
 WORKDIR /app
 COPY --from=build-env /app/out ./
 
-ENTRYPOINT ["dotnet", "SecretManager.Edge.Module.dll"]
+ENTRYPOINT ["dotnet", "SecretManager.Edge.dll"]

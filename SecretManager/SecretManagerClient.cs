@@ -7,51 +7,112 @@
 
     public class SecretManagerClient
     {
-        private readonly ISecretStore _secretStore;
+        public ISecretStore? SecretStore { get; set; }
 
-        public SecretManagerClient(ISecretStore secretStore)
+        /// <summary>
+        /// Create a new SecretManagerClient using the given SecretStore to store the secrets.
+        /// Please note that a fluent interface exists to chain multiple SecretStores together.
+        /// </summary>
+        /// <param name="secretStore">To store the secrets.</param>
+        public SecretManagerClient(ISecretStore? secretStore = null)
         {
-            _secretStore = secretStore;
+            SecretStore = secretStore;
         }
 
+        /// <summary>
+        /// Clear the cache of all the chained secret stores.
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task ClearCacheAsync(CancellationToken cancellationToken = default)
         {
-            await _secretStore.ClearCacheAsync(cancellationToken);
-        }
-
-        public async Task<Secret?> GetSecretAsync(string name, string? version, DateTime? date, CancellationToken cancellationToken = default)
-        {
-            return await _secretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
-        }
-
-        public async Task<string?> GetSecretValueAsync(string name, string? version, DateTime? date, CancellationToken cancellationToken = default)
-        {
-            var secret = await _secretStore.RetrieveSecretAsync(name, version, date, cancellationToken);
-            return secret?.Value;
-        }
-
-        public async Task<SecretList?> RetrieveSecretListAsync(IList<string> secretNames, CancellationToken cancellationToken = default)
-        {
-            List<Secret?>? secrets = new();
-            foreach (var secretName in secretNames)
+            if (SecretStore != null)
             {
-                secrets.Add(new Secret(secretName));
+                await SecretStore.ClearCacheAsync(cancellationToken);
             }
-            return await _secretStore.RetrieveSecretListAsync(secrets, cancellationToken);
         }
 
-        public async Task SetSecretValueAsync(string name, string plainText, string? version = null, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get a single secret from the chained secret stores.
+        /// </summary>
+        /// <param name="name">Name of the secret.</param>
+        /// <param name="version">Version of the secret, or null for any.</param>
+        /// <param name="date">Date the secret should be valid, or null for any date.</param>
+        /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<Secret?> GetSecretAsync(string name, string? version, DateTime? date, bool forceRetrieve = false, CancellationToken cancellationToken = default)
         {
-            Secret? secret = await _secretStore.RetrieveSecretAsync(name, version, DateTime.UtcNow, cancellationToken);
-            if (secret != null)
+            if (SecretStore != null)
             {
-                secret = secret with { Value = plainText };
+                return await SecretStore.RetrieveSecretAsync(name, version, date, forceRetrieve, cancellationToken);
             }
-            else
+            return null;
+        }
+
+        /// <summary>
+        /// Get the value of a single secret from the chained secret stores.
+        /// </summary>
+        /// <param name="name">Name of the secret.</param>
+        /// <param name="version">Version of the secret, or null for any.</param>
+        /// <param name="date">Date the secret should be valid, or null for any date.</param>
+        /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<string?> GetSecretValueAsync(string name, string? version, DateTime? date, bool forceRetrieve = false, CancellationToken cancellationToken = default)
+        {
+            if (SecretStore != null)
             {
-                secret = new Secret(name, plainText);
+                var secret = await SecretStore.RetrieveSecretAsync(name, version, date, forceRetrieve, cancellationToken);
+                return secret?.Value;
             }
-            await _secretStore.StoreSecretAsync(secret, cancellationToken);
+            return null;
+        }
+
+        /// <summary>
+        /// Get a list of secrets from the chained secret stores.
+        /// </summary>
+        /// <param name="secretNames">Names of the secrets to retrieve.</param>
+        /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<SecretList?> GetSecretListAsync(IList<string> secretNames, bool forceRetrieve = false, CancellationToken cancellationToken = default)
+        {
+            if (SecretStore != null)
+            {
+                List<Secret> secrets = new();
+                foreach (var secretName in secretNames)
+                {
+                    secrets.Add(new Secret(secretName));
+                }
+                return await SecretStore.RetrieveSecretListAsync(secrets, forceRetrieve, cancellationToken);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Set the value of a specific secret and version.
+        /// </summary>
+        /// <param name="name">Name of the secret to set.</param>
+        /// <param name="value">Value to set the secret to.</param>
+        /// <param name="version">Version of the secret to set, or null for any.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task SetSecretValueAsync(string name, string value, string? version = null, CancellationToken cancellationToken = default)
+        {
+            if (SecretStore != null)
+            {
+                Secret? secret = await SecretStore.RetrieveSecretAsync(name, version, DateTime.UtcNow, false, cancellationToken);
+                if (secret != null)
+                {
+                    secret = secret with { Value = value };
+                }
+                else
+                {
+                    secret = new Secret(name, value);
+                }
+                await SecretStore.StoreSecretAsync(secret, cancellationToken);
+            }
         }
     }
 }

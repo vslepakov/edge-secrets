@@ -9,9 +9,9 @@ namespace EdgeSecrets.SecretManager
     {
         Task ClearCacheAsync(CancellationToken cancellationToken);
 
-        Task<Secret?> RetrieveSecretAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken);
+        Task<Secret?> RetrieveSecretAsync(string secretName, string? version, DateTime? date, bool forceRetrieve, CancellationToken cancellationToken);
 
-        Task<SecretList?> RetrieveSecretListAsync(IList<Secret?>? secrets, CancellationToken cancellationToken);
+        Task<SecretList> RetrieveSecretListAsync(IList<Secret> secrets, bool forceRetrieve, CancellationToken cancellationToken);
 
         Task StoreSecretAsync(Secret secret, CancellationToken cancellationToken);
     }

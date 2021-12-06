@@ -1,4 +1,4 @@
-namespace EdgeSecrets.Samples.SecretManager.Edge.Module
+namespace EdgeSecrets.Samples.SecretManager.Edge
 {
     using System;
     using System.Runtime.Loader;
@@ -8,13 +8,15 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
     using Microsoft.Azure.Devices.Client.Transport.Mqtt;
     using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
-    using EdgeSecrets.SecretManager.Edge;
 
     class Program
     {
         static void Main(string[] args)
         {
             Init().Wait();
+
+            // Get secrets
+            GetSecrets().Wait();
 
             // Wait until the app unloads or is cancelled
             var cts = new CancellationTokenSource();
@@ -53,9 +55,6 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
             ModuleClient ioTHubModuleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
             await ioTHubModuleClient.OpenAsync();
             Console.WriteLine("IoT Hub module client initialized.");
-
-            // Get secrets
-            await GetSecrets();
         }
 
         static async Task GetSecrets()
@@ -63,18 +62,20 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
             (ICryptoProvider? cryptoProvider, string? keyId) = Configuration.GetCryptoProvider();
             Console.WriteLine($"Using Crypto Provider {cryptoProvider?.GetType()}");
 
+            string secretsFile = "/usr/local/cache/secrets.json";
+
             //// Get from file
 
-            // ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
-            // ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            // var manager = new SecretManagerClient(cryptoProvider, kms, secretStore);
+            // var manager = new SecretManagerClient()
+            //     .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
+            //     .WithInMemoryStore();
 
             //// Get from remote
 
-            ISecretStore remoteSecretStore = new RemoteSecretStore(TransportType.Amqp_Tcp_Only);
-            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json", remoteSecretStore, cryptoProvider, keyId);
-            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);
+            var manager = new SecretManagerClient()
+                .WithRemoteSecretStore(TransportType.Amqp_Tcp_Only, new ClientOptions())
+                .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
+                .WithInMemorySecretStore();
             
             //// Test the secret store
 

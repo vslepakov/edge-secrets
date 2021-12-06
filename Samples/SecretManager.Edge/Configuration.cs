@@ -1,4 +1,4 @@
-﻿namespace EdgeSecrets.Samples.SecretManager.Edge.Module
+﻿namespace EdgeSecrets.Samples.SecretManager.Edge
 {
     using System;
     using EdgeSecrets.CryptoProvider;
