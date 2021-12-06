@@ -8,7 +8,6 @@ namespace EdgeSecrets.Samples.SecretManager.Edge.Module
     using Microsoft.Azure.Devices.Client.Transport.Mqtt;
     using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
-    using EdgeSecrets.SecretManager.Edge;
 
     class Program
     {

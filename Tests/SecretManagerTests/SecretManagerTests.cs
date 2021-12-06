@@ -31,7 +31,7 @@
             Assert.Equal(PLAINTEXT, value);
         }
 
-//        [Fact]
+        [Fact]
         public async Task Encrypt_And_Decrypt_Data_Using_AzureKeyVault_Provider_Success()
         {
             // Arrange
@@ -58,7 +58,7 @@
             Assert.Equal(PLAINTEXT, value);
         }
 
-//        [Fact]
+        [Fact]
         public async Task Encrypt_And_Decrypt_Data_Using_Identity_Service_Provider_Success()
         {
             // Arrange

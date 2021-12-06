@@ -1,4 +1,4 @@
-namespace EdgeSecrets.SecretManager.Edge
+namespace EdgeSecrets.SecretManager
 {
     using System;
     using System.Text;
@@ -100,7 +100,7 @@ namespace EdgeSecrets.SecretManager.Edge
         /// <returns>Secret found or null if not found.</returns>
         protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
         {
-            SecretList? localSecrets = await RetrieveSecretListInternalAsync(new List<Secret?>() { new Secret(secretName) }, cancellationToken);
+            SecretList? localSecrets = await RetrieveSecretListInternalAsync(new List<Secret>() { new Secret(secretName) }, cancellationToken);
             return localSecrets?.GetSecret(secretName, version, date);
         }
 
