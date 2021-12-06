@@ -19,12 +19,17 @@ namespace EdgeSecrets.SecretManager
 
     public class InMemorySecretStore : SecretStoreBase
     {
-        private SecretList _cachedSecrets = new SecretList();
+        private readonly SecretList _cachedSecrets = new();
 
         public InMemorySecretStore(
             ISecretStore? secretStore, ICryptoProvider? cryptoProvider = null, string? keyId = default)
             : base(secretStore, cryptoProvider, keyId)
         {
+        }
+
+        public int LocalSecretCount
+        {
+            get { return _cachedSecrets.Count; }
         }
 
         /// <summary>

@@ -31,6 +31,32 @@ namespace EdgeSecrets.SecretManager
             _fileName = fileName;
         }
 
+        public int LocalSecretCount
+        {
+            get
+            {
+                if (File.Exists(_fileName))
+                {
+                    SecretList? fileSecretList = GetFileSecretList(default).GetAwaiter().GetResult();
+                    if (fileSecretList != null)
+                    {
+                        return fileSecretList.Count;
+                    }
+                }
+                return 0;
+            }
+        }
+
+        protected async Task<SecretList?> GetFileSecretList(CancellationToken cancellationToken)
+        {
+            SecretList? fileSecretList;
+            using (FileStream openStream = File.Open(_fileName, FileMode.Open))
+            {
+                fileSecretList = await JsonSerializer.DeserializeAsync<SecretList>(openStream, new JsonSerializerOptions(), cancellationToken);
+            }
+            return fileSecretList;
+        }
+
         /// <summary>
         /// Clear any cached secrets from the local secret store.
         /// </summary>
@@ -71,11 +97,7 @@ namespace EdgeSecrets.SecretManager
             if (File.Exists(_fileName))
             {
                 // Read all existing secrets stored in the file
-                SecretList? fileSecretList;
-                using (FileStream openStream = File.Open(_fileName, FileMode.Open))
-                {
-                    fileSecretList = await JsonSerializer.DeserializeAsync<SecretList>(openStream, new JsonSerializerOptions(), cancellationToken);
-                }
+                SecretList? fileSecretList = await GetFileSecretList(cancellationToken);
 
                 // If any secrets found in the file
                 if (fileSecretList != null)
@@ -106,11 +128,7 @@ namespace EdgeSecrets.SecretManager
             if (File.Exists(_fileName))
             {
                 // Read all existing secrets stored in the file
-                SecretList? fileSecretList;
-                using (FileStream openStream = File.Open(_fileName, FileMode.Open))
-                {
-                    fileSecretList = await JsonSerializer.DeserializeAsync<SecretList>(openStream, new JsonSerializerOptions(), cancellationToken);
-                }
+                SecretList? fileSecretList = await GetFileSecretList(cancellationToken);
                 if (fileSecretList != null)
                 {
                     localSecretList = fileSecretList;
@@ -141,11 +159,7 @@ namespace EdgeSecrets.SecretManager
             if (File.Exists(_fileName))
             {
                 // Read all existing secrets stored in the file
-                SecretList? fileSecretList;
-                using (FileStream openStream = File.Open(_fileName, FileMode.Open))
-                {
-                    fileSecretList = await JsonSerializer.DeserializeAsync<SecretList>(openStream, new JsonSerializerOptions(), cancellationToken);
-                }
+                SecretList? fileSecretList = await GetFileSecretList(cancellationToken);
                 if (fileSecretList != null)
                 {
                     localSecretList = fileSecretList;
