@@ -21,7 +21,7 @@ namespace Tests.SecretDeliveryApp
         public async Task Handle_Single_Secrets_Request_Success()
         {
             // Arrange
-            const string subject = $"devices/{DeviceId}/modules/{ModuleId}";
+            const string subject = $"devices/{DeviceId}/{ModuleId}";
             var requestId = Guid.NewGuid().ToString();
             var existingSecret = new Secret("TESTSECRET", "12345", "v1", DateTime.UtcNow.AddDays(30), DateTime.UtcNow);
 
@@ -52,7 +52,7 @@ namespace Tests.SecretDeliveryApp
         public async Task Handle_Single_Secrets_Request_As_Base64_Success()
         {
             // Arrange
-            const string subject = $"devices/{DeviceId}/modules/{ModuleId}";
+            const string subject = $"devices/{DeviceId}/{ModuleId}";
             var requestId = Guid.NewGuid().ToString();
             var existingSecret = new Secret("TESTSECRET234", "12345", null, DateTime.UtcNow.AddDays(30), DateTime.UtcNow); ;
 
