@@ -15,6 +15,9 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
         {
             Init().Wait();
 
+            // Get secrets
+            GetSecrets().Wait();
+
             // Wait until the app unloads or is cancelled
             var cts = new CancellationTokenSource();
             AssemblyLoadContext.Default.Unloading += (ctx) => cts.Cancel();
@@ -52,9 +55,6 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             ModuleClient ioTHubModuleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
             await ioTHubModuleClient.OpenAsync();
             Console.WriteLine("IoT Hub module client initialized.");
-
-            // Get secrets
-            await GetSecrets();
         }
 
         static async Task GetSecrets()
