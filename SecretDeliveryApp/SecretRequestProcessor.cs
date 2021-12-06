@@ -74,6 +74,8 @@ namespace SecretDeliveryApp
                 }
             }
 
+            _logger.LogInformation($"Delivering secrets: {string.Join('|', secrets.Select(s => s.Name).ToArray())} to device {subject}");
+
             var response = new DeviceSecretResponse(request.RequestId, secrets);
             var responseAsJson = JsonConvert.SerializeObject(response);
 
