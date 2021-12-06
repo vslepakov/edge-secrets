@@ -109,9 +109,9 @@ namespace SecretDeliveryApp
         {
             var parts = subject.Split('/');
 
-            if (parts.Length == 4)
+            if (parts.Length == 3)
             {
-                return (parts[1], parts[3]);
+                return (parts[1], parts[2]);
             }
             else if (parts.Length == 2)
             {
