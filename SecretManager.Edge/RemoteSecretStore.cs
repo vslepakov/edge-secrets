@@ -36,12 +36,6 @@ namespace EdgeSecrets.SecretManager.Edge
         private Dictionary<string, PendingRequest> _pendingRequests = new();
 
         public RemoteSecretStore(TransportType transportType, ClientOptions clientOptions,
-            ICryptoProvider? cryptoProvider = null, string? keyId = default)
-            : this(transportType, clientOptions, null, cryptoProvider, keyId)
-        {
-        }
-
-        public RemoteSecretStore(TransportType transportType, ClientOptions clientOptions,
             ISecretStore? secretStore, ICryptoProvider? cryptoProvider = null, string? keyId = default)
             : base(secretStore, cryptoProvider, keyId)
         {
@@ -86,19 +80,39 @@ namespace EdgeSecrets.SecretManager.Edge
         }
         #endregion
 
+        /// <summary>
+        /// Clear any cached secrets from the local secret store.
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         protected override async Task ClearCacheInternalAsync(CancellationToken cancellationToken)
         {
             await Task.FromResult(0);
         }
 
+        /// <summary>
+        /// Retrieve single secret by name and data from the local secret store.
+        /// </summary>
+        /// <param name="secretName">Name of the secret to retrieve.</param>
+        /// <param name="version">Name of the version to retrieve.</param>
+        /// <param name="date">Timestamp where the secret should be valid (between activation and expiration).</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>Secret found or null if not found.</returns>
         protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
         {
             SecretList? localSecrets = await RetrieveSecretListInternalAsync(new List<Secret?>() { new Secret(secretName) }, cancellationToken);
             return localSecrets?.GetSecret(secretName, version, date);
         }
 
-        protected override async Task<SecretList?> RetrieveSecretListInternalAsync(IList<Secret?>? secrets, CancellationToken cancellationToken)
+        /// <summary>
+        /// Retrieve list of secrets from the local secret store.
+        /// </summary>
+        /// <param name="secrets">List of secrets to retrieve. Secret should have a name and could have a version.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        protected override async Task<SecretList> RetrieveSecretListInternalAsync(IList<Secret> secrets, CancellationToken cancellationToken)
         {
+            SecretList localSecretList = new();
             if (await InitializeModuleClient(cancellationToken))
             {
                 // Create new request
@@ -116,7 +130,6 @@ namespace EdgeSecrets.SecretManager.Edge
                 Console.WriteLine($"Send request for secrets with id '{request.RequestId}'");
 
                 // Wait for the response
-                IList<Secret?>? remoteSecrets = null;
                 try
                 {
                     using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
@@ -126,7 +139,14 @@ namespace EdgeSecrets.SecretManager.Edge
                         {
                             var response = await pendingRequest.ResponseReceived.Task.ConfigureAwait(continueOnCapturedContext: false);
                             Console.WriteLine($"Received update of secrets for RequestId '{response?.RequestId}' ({response?.Secrets?.Count} secret(s) received)");
-                            remoteSecrets = response?.Secrets;
+                            var remoteSecrets = response?.Secrets;
+
+                            // Convert secrets to secret list
+                            if (remoteSecrets != null)
+                            {
+                                localSecretList = new SecretList(remoteSecrets);
+                            }
+
                         }                        
                     }
                 }
@@ -137,21 +157,27 @@ namespace EdgeSecrets.SecretManager.Edge
 
                 // Remove the request from the list of pending requests
                 _pendingRequests.Remove(request.RequestId);
-
-                // Convert secrets to secret list
-                if (remoteSecrets != null)
-                {
-                    return new SecretList(remoteSecrets);
-                }
             }
-            return null;
+            return localSecretList;
         }
 
+        /// <summary>
+        /// Store single secret in the local secret store.
+        /// </summary>
+        /// <param name="secret">Secret to store.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         protected override async Task StoreSecretInternalAsync(Secret value, CancellationToken cancellationToken)
         {
             await Task.FromResult(0);
         }
 
+        /// <summary>
+        /// Merge secret list into the local secret store.
+        /// </summary>
+        /// <param name="secretList">Secret list to merge.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         protected override async Task MergeSecretListInternalAsync(SecretList secretList, CancellationToken cancellationToken)
         {
             await Task.FromResult(0);

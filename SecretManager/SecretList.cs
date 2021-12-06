@@ -20,17 +20,11 @@ namespace EdgeSecrets.SecretManager
         /// Multiple versions of a secret will be stored indexed by version.
         /// </summary>
         /// <param name="secrets">List of secrets to copy into the new list. This list can contain multiple versions with the same name.</param>
-        public SecretList(IList<Secret?>? secrets)
+        public SecretList(IList<Secret> secrets)
         {
-            if (secrets != null)
+            foreach (var secret in secrets)
             {
-                foreach (var secret in secrets)
-                {
-                    if (secret != null)
-                    {
-                        this.SetSecret(secret);
-                    }
-                }
+                this.SetSecret(secret);
             }
         }
 

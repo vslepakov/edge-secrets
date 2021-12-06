@@ -80,7 +80,7 @@
         {
             if (SecretStore != null)
             {
-                List<Secret?>? secrets = new();
+                List<Secret> secrets = new();
                 foreach (var secretName in secretNames)
                 {
                     secrets.Add(new Secret(secretName));

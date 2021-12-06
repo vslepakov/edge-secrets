@@ -13,9 +13,12 @@
 
             var cryptoProvider = new AzureKeyVaultCryptoProvider();
 
-            ISecretStore fileSecretStore = new FileSecretStore("/usr/local/cache/secrets.json");
-            ISecretStore secretStore = new InMemorySecretStore(fileSecretStore);
-            var manager = new SecretManagerClient(secretStore);
+            string secretsFile = "/usr/local/cache/secrets.json";
+
+            var manager = new SecretManagerClient()
+                .WithFileSecretStore(secretsFile, cryptoProvider)
+                .WithInMemorySecretStore();
+
             Console.WriteLine($"EdgeSecret test using Crypte Provider {cryptoProvider}");
 
             string keyA = "test";

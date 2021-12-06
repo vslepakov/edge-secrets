@@ -19,13 +19,7 @@ namespace EdgeSecrets.SecretManager
 
     public class InMemorySecretStore : SecretStoreBase
     {
-        private SecretList? _cachedSecrets = null;
-
-        public InMemorySecretStore(
-            ICryptoProvider? cryptoProvider = null, string? keyId = default)
-            : this(null, cryptoProvider, keyId)
-        {
-        }
+        private SecretList _cachedSecrets = new SecretList();
 
         public InMemorySecretStore(
             ISecretStore? secretStore, ICryptoProvider? cryptoProvider = null, string? keyId = default)
@@ -33,55 +27,68 @@ namespace EdgeSecrets.SecretManager
         {
         }
 
+        /// <summary>
+        /// Clear any cached secrets from the local secret store.
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         protected override async Task ClearCacheInternalAsync(CancellationToken cancellationToken)
         {
-            _cachedSecrets = null;
+            _cachedSecrets.Clear();
             await Task.FromResult(0);
         }
 
+        /// <summary>
+        /// Retrieve single secret by name and data from the local secret store.
+        /// </summary>
+        /// <param name="secretName">Name of the secret to retrieve.</param>
+        /// <param name="version">Name of the version to retrieve.</param>
+        /// <param name="date">Timestamp where the secret should be valid (between activation and expiration).</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>Secret found or null if not found.</returns>
         protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
         {
-            return await Task.FromResult(_cachedSecrets?.GetSecret(secretName, version, date));
+            return await Task.FromResult(_cachedSecrets.GetSecret(secretName, version, date));
         }
 
-        protected override async Task<SecretList?> RetrieveSecretListInternalAsync(IList<Secret?>? secrets, CancellationToken cancellationToken)
+        /// <summary>
+        /// Retrieve list of secrets from the local secret store.
+        /// </summary>
+        /// <param name="secrets">List of secrets to retrieve. Secret should have a name and could have a version.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        protected override async Task<SecretList> RetrieveSecretListInternalAsync(IList<Secret> secrets, CancellationToken cancellationToken)
         {
-            SecretList? localSecrets = null;
-            if ((secrets != null) && (_cachedSecrets != null))
+            SecretList localSecretList = new();
+            foreach(var secret in secrets)
             {
-                foreach(var secret in secrets)
+                var cachedSecret = _cachedSecrets.GetSecret(secret.Name, secret.Version);
+                if (cachedSecret != null)
                 {
-                    if (secret != null)
-                    {
-                        var cachedSecret = _cachedSecrets?.GetSecret(secret.Name, secret.Version);
-                        if (cachedSecret != null)
-                        {
-                            if (localSecrets == null)
-                            {
-                                localSecrets = new SecretList();
-                            }
-                            localSecrets.SetSecret(cachedSecret);
-                        }
-                    }
+                    localSecretList.SetSecret(cachedSecret);
                 }
             }
-            else
-            {
-                localSecrets = _cachedSecrets;
-            }
-            return await Task.FromResult<SecretList?>(localSecrets);
+            return await Task.FromResult<SecretList>(localSecretList);
         }
 
+        /// <summary>
+        /// Store single secret in the local secret store.
+        /// </summary>
+        /// <param name="secret">Secret to store.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         protected override async Task StoreSecretInternalAsync(Secret secret, CancellationToken cancellationToken)
         {
-            if (_cachedSecrets == null)
-            {
-                _cachedSecrets = new();
-            }
-            _cachedSecrets?.SetSecret(secret);
+            _cachedSecrets.SetSecret(secret);
             await Task.FromResult(0);
         }
 
+        /// <summary>
+        /// Merge secret list into the local secret store.
+        /// </summary>
+        /// <param name="secretList">Secret list to merge.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         protected override async Task MergeSecretListInternalAsync(SecretList secretList, CancellationToken cancellationToken)
         {
             foreach (var secretVersions in secretList.Values)

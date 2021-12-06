@@ -85,5 +85,31 @@
             Assert.False(string.IsNullOrEmpty(value));
             Assert.Equal(PLAINTEXT, value);
         }
+
+        [Fact]
+        public async Task Set_And_Get_Secrets_Using_Secret_Store_Chain_Success()
+        {
+            // Arrange
+            const string PLAINTEXT = "Hello World";
+
+            var cryptoProvider = new TestCryptoProvider();
+
+            var manager = new SecretManagerClient()
+                .WithFileSecretStore("secrets.json", cryptoProvider)
+                .WithInMemorySecretStore();
+
+            await manager.SetSecretValueAsync("keyA", "Text of keyA");
+            await manager.SetSecretValueAsync("keyB", "Text of keyB");
+            var valueA = await manager.GetSecretValueAsync("keyA", null, DateTime.Now);
+            var valueB = await manager.GetSecretValueAsync("keyB", null, DateTime.Now);
+
+            // Act
+            string key = "testKey";
+            await manager.SetSecretValueAsync(key, PLAINTEXT);
+            var value = await manager.GetSecretValueAsync(key, null, DateTime.Now);
+
+            // Assert
+            Assert.False(string.IsNullOrEmpty(value));
+            Assert.Equal(PLAINTEXT, value);
+        }
     }
-}
