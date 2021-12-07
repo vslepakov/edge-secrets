@@ -75,7 +75,7 @@ namespace EdgeSecrets.SecretManager
                 // If the secret was found, decrypt the value of the secret (if crypto provider is available)
                 if (secret != null)
                 {
-                    if (_cryptoProvider != null)
+                    if ((_cryptoProvider != null) && (secret.Value != null))
                     {
                         secret = secret with { Value = await _cryptoProvider.DecryptAsync(secret.Value, _keyId, cancellationToken) };
                     }
@@ -92,7 +92,7 @@ namespace EdgeSecrets.SecretManager
                     {
                         // Store the secret in the local secret store with an encrypt value (if crypto provider is available)
                         Secret storeSecret = secret;
-                        if (_cryptoProvider != null)
+                        if ((_cryptoProvider != null) && (secret.Value != null))
                         {
                             storeSecret = secret with { Value = await _cryptoProvider.EncryptAsync(secret.Value, _keyId, cancellationToken) };
                         }
@@ -136,7 +136,7 @@ namespace EdgeSecrets.SecretManager
                     if (internalSecret != null)
                     {
                         Secret foundSecret = internalSecret;
-                        if (_cryptoProvider != null)
+                        if ((_cryptoProvider != null) && (internalSecret.Value != null))
                         {
                             foundSecret = internalSecret with { Value = await _cryptoProvider.DecryptAsync(internalSecret.Value, _keyId, cancellationToken) };
                         }
@@ -163,7 +163,7 @@ namespace EdgeSecrets.SecretManager
                         {
                             // Store the secret in the local secret store with an encrypt value (if crypto provider is available)
                             Secret storeSecret = externalSecret;
-                            if (_cryptoProvider != null)
+                            if ((_cryptoProvider != null) && (externalSecret.Value != null))
                             {
                                 storeSecret = externalSecret with { Value = await _cryptoProvider.EncryptAsync(externalSecret.Value, _keyId, cancellationToken) };
                             }
