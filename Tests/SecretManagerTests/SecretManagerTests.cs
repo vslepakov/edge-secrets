@@ -10,12 +10,14 @@
     public class SecretManagerTests
     {
         const string FILENAME = "secrets.json";
-
         const string PLAINTEXT = "Hello World";
 
         // Create a key in AKV, give your Service Principal access and configure the key reference here 
-        //const string KEY_ID = "https://keyvault-ca-2.vault.azure.net/keys/kms-key/84e7576868ff452b918ae5eeb05cf2e0";
-        const string KEY_ID = "https://mvsdev3kv.vault.azure.net/keys/kms-key/2da6c35f4fe34496a5078b9a9983f042";
+        const string AKV_KEY_ID = "https://mvsdev3kv.vault.azure.net/keys/kms-key/2da6c35f4fe34496a5078b9a9983f042";
+
+        // Create a key like that:
+        // curl -X POST -H 'Content-Type: application/json' -d '{"keyId": "mysymmtestkey1", "usage": "encrypt"}'  --unix-socket /run/aziot/keyd.sock http://keyd.sock/key?api-version=2020-09-01
+        const string IS_KEY_ID = "mysymmtestkey1";
 
         [Fact]
         public async Task Encrypt_And_Decrypt_Data_Using_AzureKeyVault_Provider_Success()
@@ -24,8 +26,8 @@
             var cryptoProvider = new AzureKeyVaultCryptoProvider();
 
             // Act
-            var encryptedValue = await cryptoProvider.EncryptAsync(PLAINTEXT, KEY_ID);
-            var decryptedValue = await cryptoProvider.DecryptAsync(encryptedValue, KEY_ID);
+            var encryptedValue = await cryptoProvider.EncryptAsync(PLAINTEXT, AKV_KEY_ID);
+            var decryptedValue = await cryptoProvider.DecryptAsync(encryptedValue, AKV_KEY_ID);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(encryptedValue));
@@ -40,8 +42,8 @@
             var cryptoProvider = new IdentityServiceCryptoProvider();
 
             // Act
-            var encryptedValue = await cryptoProvider.EncryptAsync(PLAINTEXT, KEY_ID);
-            var decryptedValue = await cryptoProvider.DecryptAsync(encryptedValue, KEY_ID);
+            var encryptedValue = await cryptoProvider.EncryptAsync(PLAINTEXT, IS_KEY_ID);
+            var decryptedValue = await cryptoProvider.DecryptAsync(encryptedValue, IS_KEY_ID);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(encryptedValue));
@@ -112,7 +114,7 @@
             var cryptoProvider = new AzureKeyVaultCryptoProvider();
 
             var manager = new SecretManagerClient()
-                .WithFileSecretStore(FILENAME, cryptoProvider, KEY_ID)
+                .WithFileSecretStore(FILENAME, cryptoProvider, AKV_KEY_ID)
                 .WithInMemorySecretStore();
             await manager.ClearCacheAsync();
 
@@ -133,7 +135,7 @@
             var cryptoProvider = new IdentityServiceCryptoProvider();
 
             var manager = new SecretManagerClient()
-                .WithFileSecretStore(FILENAME, cryptoProvider, KEY_ID)
+                .WithFileSecretStore(FILENAME, cryptoProvider, IS_KEY_ID)
                 .WithInMemorySecretStore();
             await manager.ClearCacheAsync();
 
@@ -162,7 +164,7 @@
             // 1. Clear secret stores and store new secrets then get the secret values
             // Act
             var manager = new SecretManagerClient()
-                .WithFileSecretStore(FILENAME, cryptoProvider, KEY_ID)
+                .WithFileSecretStore(FILENAME, cryptoProvider, AKV_KEY_ID)
                 .WithInMemorySecretStore();
             await manager.ClearCacheAsync();
 
@@ -185,7 +187,7 @@
             // 2. Get the secret values from previously stored secrets
             // Act
             manager = new SecretManagerClient()
-                .WithFileSecretStore(FILENAME, cryptoProvider, KEY_ID)
+                .WithFileSecretStore(FILENAME, cryptoProvider, AKV_KEY_ID)
                 .WithInMemorySecretStore();
 
             // Assert
@@ -198,11 +200,11 @@
             Assert.Equal(valueA, ret2A);
             Assert.Equal(valueB, ret2B);
             Assert.Equal(valueC, ret2C);
-            Assert.Equal(valueD, ret2D);                
+            Assert.Equal(valueD, ret2D);
 
             // 3. Get a secret list from previously stored secrets
             // Act
-            var fileSecretStore = new FileSecretStore(FILENAME, null, cryptoProvider, KEY_ID);
+            var fileSecretStore = new FileSecretStore(FILENAME, null, cryptoProvider, AKV_KEY_ID);
             var inMemorySecretStore = new InMemorySecretStore(fileSecretStore);
             manager = new SecretManagerClient(inMemorySecretStore);
 
