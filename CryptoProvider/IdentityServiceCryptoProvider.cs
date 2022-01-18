@@ -18,6 +18,11 @@
         private const string KEYD_SOCKET = "/run/aziot/keyd.sock";
         private const string SYMMETRIC_ALGORITHM = "AEAD";
 
+        // TODO: make random
+        private const string IV = "0123456";
+
+        // TODO: make random
+        private const string AAD = "7891011";
         private readonly HttpClient _httpClient;
 
         public IdentityServiceCryptoProvider()
@@ -38,8 +43,8 @@
                 plaintext = Convert.ToBase64String(plaintextBytes),
                 parameters = new
                 {
-                    iv = "TEST".Base64Encode(),
-                    aad = "TEST".Base64Encode()
+                    iv = IV.Base64Encode(),
+                    aad = AAD.Base64Encode()
                 }
             };
 
@@ -60,8 +65,8 @@
                 ciphertext = Convert.ToBase64String(ciphertextBytes),
                 parameters = new
                 {
-                    iv = "TEST".Base64Encode(),
-                    aad = "TEST".Base64Decode()
+                    iv = IV.Base64Encode(),
+                    aad = AAD.Base64Encode()
                 }
             };
 
