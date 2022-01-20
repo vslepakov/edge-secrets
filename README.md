@@ -1,36 +1,27 @@
-# edge-keyvault
+# Edge Secret Management
+
+> DISCLAIMER: This repo does not contain production ready code or product but rather demonstrates an approach to managing secrets on the Edge.
+
+Currently there is no first party Microsoft solution for secret management on the Edge in the IoT Space. Still, there is a number of useful features in [IoT Edge](https://azure.microsoft.com/en-us/services/iot-edge/) and the [Azure IoT Identity Service](https://azure.github.io/iot-identity-service/) which can be used to build a custom secret management solution which is more secure then just storing secrets in a file in plain text.
+
+## Challenges
+
+Here are **some** of the challenges that we identified while looking at the problem holistically:
+
+1. **Secure storage** may or may not be available on the device.
+2. **Secret delivery** - how to deliver secrets to a device in a secure way?
+3. **Lifecycle management** - secrets may need to be e.g. deleted/updated and sometimes multiple systems can be involved. The whole process may or may not be well coordinated, changes can happen offline but there is still need to have a single pain of glass to manage those secrets.
+4. **Observability** - it is necessary to know which secrets a device requested and is currently using.
+5. **Auditability** - it is important to know who has access to secrets and who created/deleted/updated them.
+6. **Access Control** - it is important to restrict access to the secrets. Not every device OR user should be able to access all secrets.
+7. **Dev Experience** - what is the best way to deliver a solution for this problem? Should a be a library (e.g. NuGet package) or rather an IoT Edge module or a host level process which acts as a secret manager offering an API for secret access?
+8. **Dependency on additional Cloud resources** - typically an IoT solution built on Azure contains an IoT Hub and Microsoft supports strong device authentication with this service. While it can be used (as we demonstrate in this demo) to send messages back and forth, one could also let devices and additional Azure service like e.g. Azure KeyVault to request secrets. Both approaches come with pros and cons. A few examples of things to consider:
+   - Need for whitelisting additional URLs on the on-prem firewall or proxy
+   - Scalability of the service to serve a high number of devices
+   - Need for an additional secret to access the service
+   - Is the RBAC mechanism used by the service enough and how does is scale with a growing number of devices?
+   - ...
+
+# Design
 
 [Current design](docs/Design.pptx)
-
-# Secret request and response contract
-Device is sending a secret request messages using a Telemetry message to the cloud.
-The message will have the **secret-request-id** property set to the RequestId.
-```
-{
-  "RequestId": "6cba680f-9f6e-4daa-a6dd-2918b8b8d157",
-  "CreateDate": "2021-11-19T07:56:25.447128+00:00",
-  "Secrets": [
-    {
-      "Name": "test",
-      "Version": "1234" // optional, otherwise all versions will be returned
-    }
-  ]
-}
-```
-
-The cloud will respond with the Direct Method **UpdateSecrets** with the following payload.
-```
-{
-  "RequestId": "6cba680f-9f6e-4daa-a6dd-2918b8b8d157",
-  "Secrets": [
-    {
-      "Name": "test",
-      "Value": "secret from Azure",
-      "Version": "1234", // optional
-      "ActivationDate": "2021-01-01T00:00:00", // optional
-      "ExpirationDate": "2022-01-01T00:00:00" // optional
-    }
-  ]
-}
-```
-The RequestId in the request message and the DirectMethod call should match.
