@@ -8,14 +8,13 @@ To deploy the whole solution with all the services:
 That script will deploy all the services in the rectangle:
 ![alt](../images/deployment-all.png)
 
+Parameters:
 * **[RG]**: the resource group name. 
 
     NOTE: It will be created in the northeurope region.
 
 * **[WebHook API Key]**: an arbitrary string to use as the webhook API key.
 
-
-Prerequisites:
 * **[Container Registry]** and **[Image URI]** of the SecretDeliveryApp. 
 
     Look [here](../SecretDeliveryApp) to build and upload the image.
