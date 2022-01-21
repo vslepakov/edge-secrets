@@ -5,7 +5,7 @@ To deploy the whole solution with all the services:
 ./deployAll.sh [RG Name] [Container Registry] [Image URI] [Tenant ID] [App Object ID] [App Client ID] [App Password] [WebHook API Key to use]
 ```
 
-That script will deploy all the services in the rectangle:
+That script will deploy all the services in the box:
 ![alt](../images/deployment-all.png)
 
 Parameters:
@@ -20,26 +20,31 @@ Parameters:
     Look [here](../SecretDeliveryApp) to build and upload the image.
 * **[Tenant ID]**, **[App Object ID]**, **[App Client ID]** and **[App Password]**
 
-    The SecretDeliveryApp uses a service principal to access Azure KeyVault and Azure Container Registry. To create a service principal and get those info:
+    The SecretDeliveryApp uses a service principal to access Azure KeyVault and Azure Container Registry. 
 
-   ```bash
-   az ad sp create-for-rbac -n "mySecretDeliveryApp" --skip-assignment
-   ```
-
-   Sample output:
-   ```bash
-   {
-    "appId": "7bb1XXXX-f6XX-4116-884f-XXXXXXXXXXXX", # --> [App Object ID]
-    "displayName": "mySecretDeliveryApp", # --> [App Client ID]
-    "password": "nK8dVa~TfHJY-uTR-D7RK8BQ_P_XXXXXXX", # --> [App Password]
-    "tenant": "72f9XXXX-86XX-41af-XXXXXXXXXXXX" # --> [Tenant ID]
-   }
-   ```
-
-
+    
 Example:
 ```bash
-./deployAll.sh "edge-secrets-rg" "arlotito.azurecr.io" "edge-secrets/secret-delivery-app:0.0.1" "72f9XXXX-86XX-41af-XXXXXXXXXXXX" "7bb1XXXX-f6XX-4116-884f-XXXXXXXXXXXX" "mySecretDeliveryApp" "nK8dVa~TfHJY-uTR-D7RK8BQ_P_XXXXXXX" "anyString"
+RG=<the-rg-you-want-to-deploy-to>               #example: "edge-secrets-rg"
+APP_SP_NAME=<sp-name-to-create>                 #example: "mySecretDeliveryApp"
+ACR_NAME=<existing-container-registry-name>     #example: "myacr.azurecr.io"
+IMAGE_URI=<image-uri-to-use>                    #example: "edge-secrets/secret-delivery-app:0.0.1"
+WEB_API_KEY=<webhook-api-key-to-use>            #example: "anyString"
+
+# Obtain the full acr ID 
+ACR_REGISTRY_ID=$(az acr show --name $ACR_NAME --query "id" --output tsv)
+
+# create the service principal with "acrpull" access to the ACR.
+# NOTE: password is shown only once. Make sure you save it!
+APP_PASSWORD=$(az ad sp create-for-rbac --name $APP_SP_NAME --scopes $ACR_REGISTRY_ID --role acrpull --query "password" --output tsv)
+
+# retrieve other ids
+APP_OBJECT_ID=$(az ad sp list --display-name $APP_SP_NAME --query [0].objectId -o tsv)
+APP_CLIENT_ID=$(az ad sp list --display-name $APP_SP_NAME --query [0].appId -o tsv)
+APP_TENANT_ID=$(az ad sp list --display-name $APP_SP_NAME --query [0].appOwnerTenantId -o tsv)
+
+# deploy
+./deployAll.sh "$RG" "$ACR_NAME" "$ACR_NAME/$IMAGE_URI" "$APP_TENANT_ID" "$APP_OBJECT_ID" "$APP_CLIENT_ID" "$APP_PASSWORD" "anyString"
 ```
 
 # Deploy the container app only
