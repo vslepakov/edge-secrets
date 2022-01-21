@@ -15,9 +15,8 @@ Parameters:
 
 * **[WebHook API Key]**: an arbitrary string to use as the webhook API key.
 
-* **[Container Registry]** and **[Image URI]** of the SecretDeliveryApp. 
+* **[Container Registry]** and **[Image URI]** of the [SecretDeliveryApp](../SecretDeliveryApp). 
 
-    Look [here](../SecretDeliveryApp) to build and upload the image.
 * **[Tenant ID]**, **[App Object ID]**, **[App Client ID]** and **[App Password]**
 
     The SecretDeliveryApp uses a service principal to access Azure KeyVault and Azure Container Registry. 
@@ -30,6 +29,11 @@ APP_SP_NAME=<sp-name-to-create>                 #example: "mySecretDeliveryApp"
 ACR_NAME=<existing-container-registry-name>     #example: "myacr.azurecr.io"
 IMAGE_URI=<image-uri-to-use>                    #example: "edge-secrets/secret-delivery-app:0.0.1"
 WEB_API_KEY=<webhook-api-key-to-use>            #example: "anyString"
+
+# build and push the SecretDeliveryApp (see SecretDeliveryApp/README.md)
+# NOTE: make sure you are in the project's root folder
+docker build -t $ACR_NAME/$IMAGE_URI -f ./SecretDeliveryApp/Dockerfile .
+docker push $ACR_NAME/$IMAGE_URI
 
 # Obtain the full acr ID 
 ACR_REGISTRY_ID=$(az acr show --name $ACR_NAME --query "id" --output tsv)
