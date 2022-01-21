@@ -23,6 +23,25 @@ Prerequisites:
 
     The SecretDeliveryApp uses a service principal to access Azure KeyVault and Azure Container Registry. To create a service principal and get those info:
 
+   ```bash
+   az ad sp create-for-rbac -n "mySecretDeliveryApp" --skip-assignment
+   ```
+
+   Sample output:
+   ```bash
+   {
+    "appId": "7bb1XXXX-f6XX-4116-884f-XXXXXXXXXXXX", # --> [App Object ID]
+    "displayName": "mySecretDeliveryApp", # --> [App Client ID]
+    "password": "nK8dVa~TfHJY-uTR-D7RK8BQ_P_XXXXXXX", # --> [App Password]
+    "tenant": "72f9XXXX-86XX-41af-XXXXXXXXXXXX" # --> [Tenant ID]
+   }
+   ```
+
+
+Example:
+```bash
+./deployAll.sh "edge-secrets-rg" "arlotito.azurecr.io" "edge-secrets/secret-delivery-app:0.0.1" "72f9XXXX-86XX-41af-XXXXXXXXXXXX" "7bb1XXXX-f6XX-4116-884f-XXXXXXXXXXXX" "mySecretDeliveryApp" "nK8dVa~TfHJY-uTR-D7RK8BQ_P_XXXXXXX" "anyString"
+```
 
 # Deploy the container app only
 To deploy the container app only (TODO: setup Continuous Deployment from GitHub):
