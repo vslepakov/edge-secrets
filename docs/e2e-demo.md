@@ -1,3 +1,5 @@
+![](../images/samples-secret-manager-edge.png)
+
 # deploy the solution
 Deploy the cloud solution as explained in [deployment/README.md](../deployment/README.md), i.e.:
 
