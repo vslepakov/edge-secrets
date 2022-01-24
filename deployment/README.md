@@ -30,7 +30,7 @@ ACR_NAME=<existing-container-registry-name>     #example: "myacr.azurecr.io"
 IMAGE_URI=<image-uri-to-use>                    #example: "edge-secrets/secret-delivery-app:0.0.1"
 WEB_API_KEY=<webhook-api-key-to-use>            #example: "anyString"
 
-# build and push the SecretDeliveryApp (see SecretDeliveryApp/README.md)
+# OPTIONALLY build and push the SecretDeliveryApp (see SecretDeliveryApp/README.md)
 # NOTE: make sure you are in the project's root folder
 docker build -t $ACR_NAME/$IMAGE_URI -f ./SecretDeliveryApp/Dockerfile .
 docker push $ACR_NAME/$IMAGE_URI
@@ -48,6 +48,7 @@ APP_CLIENT_ID=$(az ad sp list --display-name $APP_SP_NAME --query [0].appId -o t
 APP_TENANT_ID=$(az ad sp list --display-name $APP_SP_NAME --query [0].appOwnerTenantId -o tsv)
 
 # deploy
+cd deployment
 ./deployAll.sh "$RG" "$ACR_NAME" "$ACR_NAME/$IMAGE_URI" "$APP_TENANT_ID" "$APP_OBJECT_ID" "$APP_CLIENT_ID" "$APP_PASSWORD" "$WEB_API_KEY"
 ```
 
