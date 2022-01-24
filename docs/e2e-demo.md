@@ -1,10 +1,12 @@
 # deploy the solution
+Deploy the cloud solution as explained in [deployment/README.md](../deployment/README.md), i.e.:
+
 ```bash
-RG="edge-secrets-rg"               
-APP_SP_NAME="arlotito-mySecretDeliveryApp"                 
-ACR_NAME="arlotito.azurecr.io"
-IMAGE_URI="edge-secrets/secret-delivery-app:0.0.1"
-WEB_API_KEY="anyString"
+RG=<the-rg-you-want-to-deploy-to>               #example: "edge-secrets-rg"
+APP_SP_NAME=<sp-name-to-create>                 #example: "mySecretDeliveryApp"
+ACR_NAME=<existing-container-registry-name>     #example: "myacr.azurecr.io"
+IMAGE_URI=<image-uri-to-use>                    #example: "edge-secrets/secret-delivery-app:0.0.1"
+WEB_API_KEY=<webhook-api-key-to-use>            #example: "anyString"
 
 # build and push the SecretDeliveryApp (see SecretDeliveryApp/README.md)
 # NOTE: make sure you are in the project's root folder
@@ -28,13 +30,16 @@ cd deployment
 ./deployAll.sh "$RG" "$ACR_NAME" "$ACR_NAME/$IMAGE_URI" "$APP_TENANT_ID" "$APP_OBJECT_ID" "$APP_CLIENT_ID" "$APP_PASSWORD" "$WEB_API_KEY"
 ```
 
-# set the secret "FabrikamConnectionString" in KV
+# create a secret in KV
+The sample application running in the iot edge will try to read the secret "FabrikamConnectionString" from the KV.
+Let's create it:
 ```bash
+USER_NAME="<mail>" #example: "me@microsoft.com"
 # get KV name
 KV_NAME=$(az keyvault list -g "$RG" --query [0].name -o tsv)
 
 # assign permissions to the user
-MY_OBJECT_ID=$(az ad user show --id "arlotito@microsoft.com" --query objectId -o tsv)
+MY_OBJECT_ID=$(az ad user show --id "$USER_NAME" --query objectId -o tsv)
 az keyvault set-policy --name $KV_NAME --object-id $MY_OBJECT_ID --secret-permissions delete get list set
 
 # create the secret "FabrikamConnectionString"
@@ -78,7 +83,7 @@ VM_NAME=$(az vm list -g $RG --query [0].name -o tsv)
 ssh azuser@$VM_NAME.northeurope.cloudapp.azure.com -i /home/arlotito/.ssh/vmedge.key
 ```
 
-[connect to VM](../Docs/samples.md)
+Follow the instructions in [Docs/samples.md](../Docs/samples.md)
 
 # view logs
 ContainerAppConsoleLogs_CL 
