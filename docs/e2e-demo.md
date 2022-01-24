@@ -80,7 +80,7 @@ deploy the solution to the iot edge vm
 ```bash
 # connect to the iot edge VM
 VM_NAME=$(az vm list -g $RG --query [0].name -o tsv)
-ssh azuser@$VM_NAME.northeurope.cloudapp.azure.com -i /home/arlotito/.ssh/vmedge.key
+ssh azuser@$VM_NAME.northeurope.cloudapp.azure.com -i $HOME/.ssh/vmedge.key
 ```
 
 Follow the instructions in [Docs/samples.md](../Docs/samples.md)
