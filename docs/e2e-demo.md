@@ -44,8 +44,8 @@ KV_NAME=$(az keyvault list -g "$RG" --query [0].name -o tsv)
 MY_OBJECT_ID=$(az ad user show --id "$USER_NAME" --query objectId -o tsv)
 az keyvault set-policy --name $KV_NAME --object-id $MY_OBJECT_ID --secret-permissions delete get list set
 
-# create the secret "FabrikamConnectionString"
-az keyvault secret set --name "FabrikamConnectionString" --vault-name $KV_NAME --value "connection-string"
+# create the secret "InfluxDbPassword"
+az keyvault secret set --name "InfluxDbPassword" --vault-name $KV_NAME --value "my-password"
 ```
 
 # provision an iot edge 

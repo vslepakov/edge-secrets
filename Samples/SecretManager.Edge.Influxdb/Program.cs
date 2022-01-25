@@ -78,7 +78,7 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
                 .WithInMemorySecretStore();
             Console.WriteLine("Secret manager client created.");
 
-            string? dbPassword = await secretManagerClient.GetSecretValueAsync("FabrikamConnectionString", null, DateTime.Now);
+            string? dbPassword = await secretManagerClient.GetSecretValueAsync("InfluxDbPassword", null, DateTime.Now);
             if (!string.IsNullOrEmpty(dbPassword))
             {
                 Console.WriteLine($"Valid secret found.");
@@ -87,9 +87,8 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
                 string org      = "my-org";
                 string bucket   = "my-bucket";
                 string username = "my-user";
-                char[] password = dbPassword.ToCharArray();
-
-                var influxDBClient = InfluxDBClientFactory.Create(url, username, password);
+                
+                var influxDBClient = InfluxDBClientFactory.Create(url, username, dbPassword.ToCharArray());
 
                 //
                 // Query data
