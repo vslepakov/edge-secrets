@@ -1,6 +1,9 @@
 ![](../images/samples-secret-manager-edge.png)
 
-# deploy the solution
+# pre-requisite
+An Azure Container Registry is required to run the demo.
+
+# deploy the cloud solution
 Deploy the cloud solution as explained in [deployment/README.md](../deployment/README.md), i.e.:
 
 ```bash
@@ -33,22 +36,32 @@ cd deployment
 ```
 
 # create a secret in KV
-The sample application running in the iot edge will try to read the secret "FabrikamConnectionString" from the KV.
-Let's create it:
+The sample application [sampleApp.Edge.Influxdb](../Samples/sampleApp.Edge.Influxdb/Program.cs) will fetch the secret "InfluxDbPassword" from the Azure Key-Vault and will use it as password to access the sample InfluxDB.
+
+Let's create the "InfluxDbPassword" secret.
+
+First, you may need to grant your user access to the Key-Vault.
 ```bash
+# your user name
 USER_NAME="<mail>" #example: "me@microsoft.com"
+
 # get KV name
 KV_NAME=$(az keyvault list -g "$RG" --query [0].name -o tsv)
 
 # assign permissions to the user
 MY_OBJECT_ID=$(az ad user show --id "$USER_NAME" --query objectId -o tsv)
 az keyvault set-policy --name $KV_NAME --object-id $MY_OBJECT_ID --secret-permissions delete get list set
+```
 
+Then, create the secret "InfluxDbPassword" with value "my-password"
+```bash
 # create the secret "InfluxDbPassword"
 az keyvault secret set --name "InfluxDbPassword" --vault-name $KV_NAME --value "my-password"
 ```
 
 # provision an iot edge 
+Let's create a VM, install Azure IoT Edge 1.2 and connect it to the IoT Hub.
+
 ```bash
 # get iot hubname
 IOT_HUB_NAME=$(az iot hub list -g "$RG" --query [0].name -o tsv)
@@ -62,23 +75,30 @@ curl -L https://raw.githubusercontent.com/arlotito/vm-iotedge-provision/dev/scri
     -u "azuser"
 ```
 
-# deploy the Samples/SecretManager.Edge
-edit the [](../Samples/SecretManagerInfluxdb/.env) file:
-```bash
-ACR_ADDRESS=<myAcr>.azurecr.io
-ACR_USER=<myuser>
-ACR_PASSWORD=<mypassword>
+# deploy the edge solution
+1. edit the [.env](../Samples/.env) file to point at your Azure Container Registry:
 
-EDGESECRET_KEYID="mysymmkey-1"
-EDGESECRET_CRYPTO_PROVIDER="workload-api"
-EDGESECRET_INIT_VECTOR="1234567890"
-```
+  ```bash
+  ACR_ADDRESS=<myAcr>.azurecr.io
+  ACR_USER=<myuser>
+  ACR_PASSWORD=<mypassword>
 
-build and push the SecretManager.Edge solution
-deploy the solution to the iot edge vm
+  EDGESECRET_KEYID="mysymmkey-1"
+  EDGESECRET_CRYPTO_PROVIDER="workload-api"
+  EDGESECRET_INIT_VECTOR="1234567890"
+  ```
+2. build and push the [deployment.influxdb.template.json](../Samples/deployment.influxdb.template.json) edge solution
+3. deploy the solution to the iot edge vm
 
+This edge solution includes:
+* a module "influxdb", with an InfluxDB database server provisioned with:
+  * an admin user with username "my-user" and password "my-password"
+  * an empty bucket "my-bucket" in the organization "my-org"
+* a module "sampleApp", with a sample application that 
+  * will fetch the secret "InfluxDbPassword" from the AKV and will use it to connect to the InfluxDb server
+  * will query and print the content of the bucket
 
-# connect to the iot edge VM 
+# ssh into the iot edge VM 
 ```bash
 # connect to the iot edge VM
 VM_NAME=$(az vm list -g $RG --query [0].name -o tsv)
@@ -87,6 +107,7 @@ ssh azuser@$VM_NAME.northeurope.cloudapp.azure.com -i $HOME/.ssh/vmedge.key
 
 # populate influxdb
 populate influxdb with some datapoints:
+
 ```bash
 containerid="$(sudo docker ps -aqf name=influxdb)"
 sudo docker exec $containerid influx write -b my-bucket -o my-org -p s 'myMeasurement,host=myHost testField="testData1" 1556896377'
@@ -94,25 +115,25 @@ sudo docker exec $containerid influx write -b my-bucket -o my-org -p s 'myMeasur
 sudo docker exec $containerid influx write -b my-bucket -o my-org -p s 'myMeasurement,host=myHost testField="testData3" 1556896469'
 ```
 
-# check  
+# run the demo  
 Run the following commands.
 
 1. start the edge device and wait for all modules to be running
 2. get id of the docker container
   ```bash
-  containerid="$(sudo docker ps -aqf name=SecretManager)"
+  containerid="$(sudo docker ps -aqf name=sampleApp)"
   ```
 3. remove the container file cache
   ```bash
   sudo docker exec $containerid rm /usr/local/cache/secrets.json
   ```
-4. restart the SecretManager module
+4. restart the sampleApp module
   ```bash
-  sudo iotedge restart SecretManager
+  sudo iotedge restart sampleApp
   ```
-5. show the SecretManager module logs
+5. show the sampleApp module logs
   ```bash
-  sudo iotedge logs SecretManager --since 5m
+  sudo iotedge logs sampleApp --since 5m
   ```
   
   This will show logging information similar to:
@@ -132,7 +153,8 @@ Run the following commands.
   {"FabrikamConnectionString":{"6769a77965264fa9a41b6b6e5d64654e":{"Name":"FabrikamConnectionString","Value":"AiRdKfOVR5nrp4hC4X\u002BYr/CQMynmnQ76bipeQ4wJOP/vLPNYYj12dTAG3doSVT14GxAPCs08aD6v\u002BTkUK5XK7OJ7XmPx\u002Bbj92fH5mZ6716WiEtIzGlAGOXYn\u002BJ3L7edy5Tb45SkUMTGgB14QQqV1qWL79HPtM/vaKFX5VEIVigqzSCTANXGJwE5Ktvx1DTev3eNSyhuNoPHO7pRf8/PDOhmqWZ2Sut8ZZIpopPraKEUE7WirXPtse64ZjBn13lLzsH02BbgGsZVW65Y49iOxpacvtEoy/ARlnQQkUgbCaJYbH3p2d51PUhOiTZLjSDjelvafc5kirvE\u002BGHdQyEORT\u002BRilEll","Version":"6769a77965264fa9a41b6b6e5d64654e","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}}}
 
 # view logs
-ContainerAppConsoleLogs_CL 
+Optionally, you can have a look at the logs of the SecretDeliveryApp, which are posted into the Log Analytics table "ContainerAppConsoleLogs_CL".
+
 
 
 
