@@ -159,38 +159,22 @@ Run the following commands.
   {"InfluxDbPassword":{"6769a77965264fa9a41b6b6e5d64654e":{"Name":"InfluxDbPassword","Value":"AiRdKfOVR5nrp4hC4X\u002BYr/CQMynmnQ76bipeQ4wJOP/vLPNYYj12dTAG3doSVT14GxAPCs08aD6v\u002BTkUK5XK7OJ7XmPx\u002Bbj92fH5mZ6716WiEtIzGlAGOXYn\u002BJ3L7edy5Tb45SkUMTGgB14QQqV1qWL79HPtM/vaKFX5VEIVigqzSCTANXGJwE5Ktvx1DTev3eNSyhuNoPHO7pRf8/PDOhmqWZ2Sut8ZZIpopPraKEUE7WirXPtse64ZjBn13lLzsH02BbgGsZVW65Y49iOxpacvtEoy/ARlnQQkUgbCaJYbH3p2d51PUhOiTZLjSDjelvafc5kirvE\u002BGHdQyEORT\u002BRilEll","Version":"6769a77965264fa9a41b6b6e5d64654e","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}}}
   ```
 
-# view logs
-Optionally, you can have a look at the logs of the SecretDeliveryApp, which are posted into the Log Analytics table "ContainerAppConsoleLogs_CL".
+# view the SecretDeliveryApp logs
+SecretDeliveryApp posts the logs into the table "ContainerAppConsoleLogs_CL" of Logs Analytics.
 
-
-
-
--------------------------------------
-
-```bash
-sudo docker run -d -p 8086:8086 \
-      -v $PWD/data:/var/lib/influxdb2 \
-      -v $PWD/config:/etc/influxdb2 \
-      -e DOCKER_INFLUXDB_INIT_MODE=setup \
-      -e DOCKER_INFLUXDB_INIT_USERNAME=my-user \
-      -e DOCKER_INFLUXDB_INIT_PASSWORD=my-password \
-      -e DOCKER_INFLUXDB_INIT_ORG=my-org \
-      -e DOCKER_INFLUXDB_INIT_BUCKET=my-bucket \
-      --name influxdb \
-      influxdb:2.0
+Use the following query:
+```
+ContainerAppConsoleLogs_CL
+| where Message startswith "Delivering secrets: "
+| extend tokens = split(Message, " ")
+| extend device = tokens[5]
+| extend secret = tokens[2]
+| project TimeGenerated, device, secret
 ```
 
-populate influxdb with some some datapoints:
-```bash
-sudo docker exec -it influxdb bash
+![](../images/secretdeliveryapp-logs.png)
 
-influx write \
-  -b my-bucket \
-  -o my-org \
-  -p s \
-  'myMeasurement,host=myHost testField="testData" 1556896326'
-```
 
-sudo curl -X POST -H 'Content-Type: application/json' -d '{"keyId": "mysymmkey-1", "usage": "encrypt"}'  --unix-socket /run/aziot/keyd.sock http://keyd.sock/key?api-version=2020-09-01
 
-sudo docker exec $containerid cat /usr/local/cache/secrets.json
+
+
