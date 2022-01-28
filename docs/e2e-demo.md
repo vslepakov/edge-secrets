@@ -35,7 +35,7 @@ cd deployment
 ./deployAll.sh "$RG" "$ACR_NAME" "$ACR_NAME/$IMAGE_URI" "$APP_TENANT_ID" "$APP_OBJECT_ID" "$APP_CLIENT_ID" "$APP_PASSWORD" "$WEB_API_KEY"
 ```
 
-![](../images/samples-edge-solution-diagram.png)
+![](../images/samples-cloud-solution-diagram.png)
 
 # create a secret in KV
 The sample application [sampleApp.Edge.Influxdb](../Samples/SecretManager.Edge.Influxdb/Program.cs) will fetch the secret "InfluxDbPassword" from the Azure Key-Vault and will use it as password to access the sample InfluxDB.
