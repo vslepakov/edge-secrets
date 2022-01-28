@@ -1,4 +1,4 @@
-![](../images/samples-secret-manager-edge.png)
+![](../images/e2e-demo-overall-diagram.png)
 
 # pre-requisite
 An Azure Container Registry is required to run the demo.
