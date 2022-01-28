@@ -76,7 +76,7 @@ curl -L https://raw.githubusercontent.com/arlotito/vm-iotedge-provision/dev/scri
 ```
 
 # deploy the edge solution
-1. edit the [.env](../Samples/.env) file to point at your Azure Container Registry:
+1. create an ".env" file based on the [.env.sample](../Samples/.env.sample) file and edit it to point at your Azure Container Registry:
 
   ```bash
   ACR_ADDRESS=<myAcr>.azurecr.io
@@ -97,6 +97,8 @@ This edge solution includes:
 * a module "sampleApp", with a sample application that 
   * will fetch the secret "InfluxDbPassword" from the AKV and will use it to connect to the InfluxDb server
   * will query and print the content of the bucket
+
+![](../images/samples-edge-solution-diagram.png)
 
 # ssh into the iot edge VM 
 ```bash
