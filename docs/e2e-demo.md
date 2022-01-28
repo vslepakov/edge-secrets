@@ -36,7 +36,7 @@ cd deployment
 ```
 
 # create a secret in KV
-The sample application [sampleApp.Edge.Influxdb](../Samples/sampleApp.Edge.Influxdb/Program.cs) will fetch the secret "InfluxDbPassword" from the Azure Key-Vault and will use it as password to access the sample InfluxDB.
+The sample application [sampleApp.Edge.Influxdb](../Samples/SecretManager.Edge.Influxdb/Program.cs) will fetch the secret "InfluxDbPassword" from the Azure Key-Vault and will use it as password to access the sample InfluxDB.
 
 Let's create the "InfluxDbPassword" secret.
 
@@ -152,7 +152,10 @@ Run the following commands.
   sudo docker exec $containerid cat /usr/local/cache/secrets.json
   ```
 
-  {"FabrikamConnectionString":{"6769a77965264fa9a41b6b6e5d64654e":{"Name":"FabrikamConnectionString","Value":"AiRdKfOVR5nrp4hC4X\u002BYr/CQMynmnQ76bipeQ4wJOP/vLPNYYj12dTAG3doSVT14GxAPCs08aD6v\u002BTkUK5XK7OJ7XmPx\u002Bbj92fH5mZ6716WiEtIzGlAGOXYn\u002BJ3L7edy5Tb45SkUMTGgB14QQqV1qWL79HPtM/vaKFX5VEIVigqzSCTANXGJwE5Ktvx1DTev3eNSyhuNoPHO7pRf8/PDOhmqWZ2Sut8ZZIpopPraKEUE7WirXPtse64ZjBn13lLzsH02BbgGsZVW65Y49iOxpacvtEoy/ARlnQQkUgbCaJYbH3p2d51PUhOiTZLjSDjelvafc5kirvE\u002BGHdQyEORT\u002BRilEll","Version":"6769a77965264fa9a41b6b6e5d64654e","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}}}
+  You will get something like:
+  ```
+  {"InfluxDbPassword":{"6769a77965264fa9a41b6b6e5d64654e":{"Name":"InfluxDbPassword","Value":"AiRdKfOVR5nrp4hC4X\u002BYr/CQMynmnQ76bipeQ4wJOP/vLPNYYj12dTAG3doSVT14GxAPCs08aD6v\u002BTkUK5XK7OJ7XmPx\u002Bbj92fH5mZ6716WiEtIzGlAGOXYn\u002BJ3L7edy5Tb45SkUMTGgB14QQqV1qWL79HPtM/vaKFX5VEIVigqzSCTANXGJwE5Ktvx1DTev3eNSyhuNoPHO7pRf8/PDOhmqWZ2Sut8ZZIpopPraKEUE7WirXPtse64ZjBn13lLzsH02BbgGsZVW65Y49iOxpacvtEoy/ARlnQQkUgbCaJYbH3p2d51PUhOiTZLjSDjelvafc5kirvE\u002BGHdQyEORT\u002BRilEll","Version":"6769a77965264fa9a41b6b6e5d64654e","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}}}
+  ```
 
 # view logs
 Optionally, you can have a look at the logs of the SecretDeliveryApp, which are posted into the Log Analytics table "ContainerAppConsoleLogs_CL".
