@@ -2,10 +2,24 @@
 
 > DISCLAIMER: This repo does not contain production ready code or product but rather demonstrates an approach to managing secrets on the Edge.
 
-Currently there is no first party Microsoft solution for secret management on the Edge in the IoT Space. Still, there is a number of useful features in [IoT Edge](https://azure.microsoft.com/en-us/services/iot-edge/) and the [Azure IoT Identity Service](https://azure.github.io/iot-identity-service/) which can be used to build a custom secret management solution which is more secure then just storing secrets in a file in plain text.
+INSPIRATION: currently there is no first party Microsoft solution for secret management on the Edge in the IoT Space. Still, there is a number of useful features in [IoT Edge](https://azure.microsoft.com/en-us/services/iot-edge/) and the [Azure IoT Identity Service](https://azure.github.io/iot-identity-service/) which can be used to build a custom secret management solution which is more secure then just storing secrets in a file in plain text.
 
-## Challenges
+# Overview
+![](./images/overview-arch.png)
 
+The Edge Secret Management includes:
+1. the [SecretManager](./SecretManager/) component, which is responsible for fetching secrets from an Azure Key Vault and serving them at the Edge. Secrets are stored locally in-memory or in a file, in an ecrypted format using one of the supported [Crypto Providers](./CryptoProvider/). 
+2. the [SecretDeliveryApp](./SecretDeliveryApp/) app, which is responsible for delivering secrets to the Edge
+
+The solution relies on the 
+
+# Use Cases
+?
+
+# Get Started
+?
+
+# Challenges
 Here are **some** of the challenges that we identified while looking at the problem holistically:
 
 1. **Secure storage** may or may not be available on the device.
@@ -22,6 +36,5 @@ Here are **some** of the challenges that we identified while looking at the prob
    - Is the RBAC mechanism used by the service enough and how does is scale with a growing number of devices?
    - ...
 
-# Design
-
-[Current design](docs/Design.pptx)
+# Known Issues
+* NGINX crash?
