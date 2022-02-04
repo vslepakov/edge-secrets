@@ -4,7 +4,7 @@
 
 INSPIRATION: currently there is no first party Microsoft solution for secret management on the Edge in the IoT Space. Still, there is a number of useful features in [IoT Edge](https://azure.microsoft.com/en-us/services/iot-edge/) and the [Azure IoT Identity Service](https://azure.github.io/iot-identity-service/) which can be used to build a custom secret management solution which is more secure then just storing secrets in a file in plain text.
 
-# Overview
+## Overview
 ![](./images/overview-arch.png)
 
 The Edge Secret Management includes:
@@ -13,13 +13,13 @@ The Edge Secret Management includes:
 
 The solution relies on the 
 
-# Use Cases
+## Use Cases
 ?
 
-# Get Started
+## Get Started
 ?
 
-# Challenges
+## Challenges
 Here are **some** of the challenges that we identified while looking at the problem holistically:
 
 1. **Secure storage** may or may not be available on the device.
@@ -36,5 +36,5 @@ Here are **some** of the challenges that we identified while looking at the prob
    - Is the RBAC mechanism used by the service enough and how does is scale with a growing number of devices?
    - ...
 
-# Known Issues
+## Known Issues
 * NGINX crash?
