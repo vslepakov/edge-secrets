@@ -7,7 +7,7 @@ To embed the SecretManager in your application:
     using EdgeSecrets.SecretManager;
     ```
 
-* create a CryptoProvider (see [here](./docs/crypto-provider.md) for more information):
+* create a CryptoProvider (see [here](../CryptoProvider/README.md) for more information):
     ```c#
     cryptoProvider = new WorkloadApiCryptoProvider(initializationVector);
 
