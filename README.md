@@ -40,4 +40,4 @@ Here are **some** of the challenges that we identified while looking at the prob
    - ...
 
 ## Known Issues
-* NGINX crash?
+* [end-2-end demo](./docs/e2e-demo.md): we noticed that the SecretDelivery app occasionally fails (i.e. shutdowns/reboots) because of NGINX, which is used by the the [Azure Container Apps](https://azure.microsoft.com/en-us/services/container-apps/) at the ingress. The root cause may be occasional failures of the Azure Container Apps, which is still in preview. That's just an educated guess and we didn't investigate it further.
