@@ -5,7 +5,7 @@ To deploy the whole solution with all the services:
 ./deployAll.sh [RG Name] [Container Registry] [Image URI] [Tenant ID] [App Object ID] [App Client ID] [App Password] [WebHook API Key to use]
 ```
 
-That script will deploy all the services in the box:
+That script will deploy all the following services (except for Azure Key Vault, which is a pre-requisite):
 ![alt](../images/deployment-all.png)
 
 Parameters:
@@ -30,7 +30,7 @@ ACR_NAME=<existing-container-registry-name>     #example: "myacr.azurecr.io"
 IMAGE_URI=<image-uri-to-use>                    #example: "edge-secrets/secret-delivery-app:0.0.1"
 WEB_API_KEY=<webhook-api-key-to-use>            #example: "anyString"
 
-# OPTIONALLY build and push the SecretDeliveryApp (see SecretDeliveryApp/README.md)
+# build and push the SecretDeliveryApp (see SecretDeliveryApp/README.md)
 # NOTE: make sure you are in the project's root folder
 docker build -t $ACR_NAME/$IMAGE_URI -f ./SecretDeliveryApp/Dockerfile .
 docker push $ACR_NAME/$IMAGE_URI
