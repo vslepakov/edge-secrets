@@ -5,7 +5,7 @@ To deploy the whole solution with all the services:
 ./deployAll.sh [RG Name] [Container Registry] [Image URI] [Tenant ID] [App Object ID] [App Client ID] [App Password] [WebHook API Key to use]
 ```
 
-That script will deploy all the following services (except for Azure Key Vault, which is a pre-requisite):
+That script will deploy all the following services (except for the Azure Container registry, which is a pre-requisite):
 ![alt](../images/deployment-all.png)
 
 Parameters:
