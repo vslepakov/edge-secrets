@@ -19,6 +19,7 @@ To embed the SecretManager in your application:
 * create a SecretManagerClient:
     ```c#
     string secretsFile = "/usr/local/cache/secrets.json";
+    string keyId = "my-key-id";
     var secretManagerClient = new SecretManagerClient()
         .WithRemoteSecretStore(TransportType.Mqtt_Tcp_Only, new ClientOptions())
         .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
