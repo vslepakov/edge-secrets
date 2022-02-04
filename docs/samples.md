@@ -6,6 +6,8 @@ The Edge Secrets project contains sample applications to demonstrate the use of 
 
 The [SecretManager.Edge](../Samples/SecretManager.Edge) sample is an IoT Edge Module that will use the SecretManager components to retrieve a connection string to a database and read product informtion.
 
+![](./../images/samples-secret-manager-edge.png)
+
 After building and installing the module, and setting upo the cloud components, use the following steps to run demonstrate the working of the Secret Manager. On the Edge device, run the following commands.
 
 1. start the edge device and wait for all modules to be running

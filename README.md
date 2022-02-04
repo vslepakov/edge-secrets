@@ -2,10 +2,26 @@
 
 > DISCLAIMER: This repo does not contain production ready code or product but rather demonstrates an approach to managing secrets on the Edge.
 
-Currently there is no first party Microsoft solution for secret management on the Edge in the IoT Space. Still, there is a number of useful features in [IoT Edge](https://azure.microsoft.com/en-us/services/iot-edge/) and the [Azure IoT Identity Service](https://azure.github.io/iot-identity-service/) which can be used to build a custom secret management solution which is more secure then just storing secrets in a file in plain text.
+INSPIRATION: currently there is no first party Microsoft solution for secret management on the Edge in the IoT Space. Still, there is a number of useful features in [IoT Edge](https://azure.microsoft.com/en-us/services/iot-edge/) and the [Azure IoT Identity Service](https://azure.github.io/iot-identity-service/) which can be used to build a custom secret management solution which is more secure then just storing secrets in a file in plain text.
+
+## Overview
+![](./images/overview-arch.png)
+
+The Edge Secret Management solution includes:
+1. the [SecretManager](./SecretManager/) component, which is responsible for managing the [secrets lifecycle](./SecretManager/README.md#secrets-lifecycle) at the Edge. Secrets are stored locally in a [SecretStore](./SecretManager/README.md#secrets-store) (in-memory and/or in a file), in an ecrypted format using one of the supported [Crypto Providers](./CryptoProvider/). 
+2. the [SecretDeliveryApp](./SecretDeliveryApp/) app, which is responsible for retrieving the secrets from an Azure KeyVault and for delivering them to the SecretManager. Requests are sent by the edge SecretManager as a telemetry message via the Azure IoT Hub using this [contract](./docs/contracts.md).
+
+
+## Use Cases
+* ...
+
+
+## Get Started
+* deploy and run the [end-2-end demo](./docs/e2e-demo.md)
+* embed the [SecretManager](./SecretManager/) in your own application
+* see the application [samples](./Samples/)
 
 ## Challenges
-
 Here are **some** of the challenges that we identified while looking at the problem holistically:
 
 1. **Secure storage** may or may not be available on the device.
@@ -22,6 +38,5 @@ Here are **some** of the challenges that we identified while looking at the prob
    - Is the RBAC mechanism used by the service enough and how does is scale with a growing number of devices?
    - ...
 
-# Design
-
-[Current design](docs/Design.pptx)
+## Known Issues
+* [end-2-end demo](./docs/e2e-demo.md): we noticed that the SecretDelivery app occasionally fails (i.e. shutdowns/reboots) because of NGINX, which is used by the the [Azure Container Apps](https://azure.microsoft.com/en-us/services/container-apps/) at the ingress. The root cause may be occasional failures of the Azure Container Apps service, which is still in preview. That's just an educated guess and we didn't investigate it further.

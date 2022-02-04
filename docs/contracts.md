@@ -3,7 +3,7 @@
 Device is sending a secret request messages using a Telemetry message to the cloud.
 The message will have the **secret-request-id** property set to the RequestId.
 
-```
+```json
 {
   "RequestId": "6cba680f-9f6e-4daa-a6dd-2918b8b8d157",
   "CreateDate": "2021-11-19T07:56:25.447128+00:00",
@@ -18,7 +18,7 @@ The message will have the **secret-request-id** property set to the RequestId.
 
 The cloud will respond with the Direct Method **UpdateSecrets** with the following payload.
 
-```
+```json
 {
   "RequestId": "6cba680f-9f6e-4daa-a6dd-2918b8b8d157",
   "Secrets": [
