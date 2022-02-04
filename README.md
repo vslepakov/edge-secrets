@@ -13,8 +13,7 @@ The Edge Secret Management solution includes:
 
 
 ## Use Cases
-*
-*
+* ...
 
 
 ## Get Started

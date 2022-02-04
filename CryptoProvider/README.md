@@ -8,10 +8,9 @@ pre-requisites:
 
 It uses the Workload API of the Azure IoT Edge [security manager](https://docs.microsoft.com/en-us/azure/iot-edge/iot-edge-security-manager?view=iotedge-2018-06).
 ```c#
+string initializationVector = "<initializationVector>";
 cryptoProvider = new WorkloadApiCryptoProvider(initializationVector);
 ```
-
-The `initializationVector` is ...
 
 ## IdentityServiceCryptoProvider
 pre-requisites:
