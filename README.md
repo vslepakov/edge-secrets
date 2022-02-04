@@ -7,17 +7,20 @@ INSPIRATION: currently there is no first party Microsoft solution for secret man
 ## Overview
 ![](./images/overview-arch.png)
 
-The Edge Secret Management includes:
-1. the [SecretManager](./SecretManager/) component, which is responsible for fetching secrets from an Azure Key Vault and serving them at the Edge. Secrets are stored locally in-memory or in a file, in an ecrypted format using one of the supported [Crypto Providers](./CryptoProvider/). 
-2. the [SecretDeliveryApp](./SecretDeliveryApp/) app, which is responsible for delivering secrets to the Edge
+The Edge Secret Management solution includes:
+1. the [SecretManager](./SecretManager/) component, which is responsible for managing the [secrets lifecycle](./SecretManager/README.md#secrets-lifecycle) at the Edge. Secrets are stored locally in a [SecretStore](./SecretManager/README.md#secrets-store) (in-memory and/or in a file), in an ecrypted format using one of the supported [Crypto Providers](./CryptoProvider/). 
+2. the [SecretDeliveryApp](./SecretDeliveryApp/) app, which is responsible for retrieving the secrets from an Azure KeyVault and for delivering them to the SecretManager. Requests are sent by the edge SecretManager as a telemetry message via the Azure IoT Hub using this [contract](./docs/contracts.md).
 
-The solution relies on the 
 
 ## Use Cases
-?
+*
+*
+
 
 ## Get Started
-?
+* deploy and run the [end-2-end demo](./docs/e2e-demo.md)
+* embed the [SecretManager](./SecretManager/) in your own application
+* see the application [samples](./Samples/)
 
 ## Challenges
 Here are **some** of the challenges that we identified while looking at the problem holistically:
