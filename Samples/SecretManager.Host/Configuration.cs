@@ -27,7 +27,5 @@ namespace SecretManager.Host
         public static string InfluxDbOrg => Environment.GetEnvironmentVariable("INFLUXDB_ORG");
 
         public static string InfluxDbBucket => Environment.GetEnvironmentVariable("INFLUXDB_BUCKET");
-
-        public static string InfluxDbUsername => Environment.GetEnvironmentVariable("INFLUXDB_USERNAME");
     }
 }

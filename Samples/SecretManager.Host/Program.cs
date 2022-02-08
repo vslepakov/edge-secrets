@@ -39,37 +39,43 @@
 
             Console.WriteLine("Secret manager client created.");
 
+            var dbUsername = await secretManagerClient.GetSecretValueAsync("InfluxDbUsername", null, DateTime.Now);
             var dbPassword = await secretManagerClient.GetSecretValueAsync("InfluxDbPassword", null, DateTime.Now);
 
-            if (!string.IsNullOrEmpty(dbPassword))
+            if (string.IsNullOrEmpty(dbUsername))
             {
-                Console.WriteLine($"Valid secret found.");
-
-                InfluxDBClient influxDBClient = null;
-
-                try
-                {
-                    influxDBClient = InfluxDBClientFactory.Create(Configuration.InfluxDbUrl, Configuration.InfluxDbUsername, dbPassword.ToCharArray());
-                    var flux = string.Format($"from(bucket:\"{Configuration.InfluxDbBucket}\") |> range(start: 0)");
-                    var fluxTables = await influxDBClient.GetQueryApi().QueryAsync(flux, Configuration.InfluxDbOrg);
-
-                    fluxTables.ForEach(fluxTable =>
-                    {
-                        var fluxRecords = fluxTable.Records;
-                        fluxRecords.ForEach(fluxRecord =>
-                        {
-                            Console.WriteLine($"{fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
-                        });
-                    });
-                }
-                finally
-                {
-                    influxDBClient?.Dispose();
-                }
+                Console.WriteLine($"ERROR, no username found!");
+                return;
             }
-            else
+
+            if (string.IsNullOrEmpty(dbPassword))
             {
-                Console.WriteLine($"ERROR, no secret found!");
+                Console.WriteLine($"ERROR, no password found!");
+                return;
+            }
+
+            Console.WriteLine($"Valid secret found.");
+
+            InfluxDBClient influxDBClient = null;
+
+            try
+            {
+                influxDBClient = InfluxDBClientFactory.Create(Configuration.InfluxDbUrl, dbUsername, dbPassword.ToCharArray());
+                var flux = string.Format($"from(bucket:\"{Configuration.InfluxDbBucket}\") |> range(start: 0)");
+                var fluxTables = await influxDBClient.GetQueryApi().QueryAsync(flux, Configuration.InfluxDbOrg);
+
+                fluxTables.ForEach(fluxTable =>
+                {
+                    var fluxRecords = fluxTable.Records;
+                    fluxRecords.ForEach(fluxRecord =>
+                    {
+                        Console.WriteLine($"{fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
+                    });
+                });
+            }
+            finally
+            {
+                influxDBClient?.Dispose();
             }
         }
     }
