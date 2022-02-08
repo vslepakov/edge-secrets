@@ -7,16 +7,9 @@ namespace SecretManager.Host
 {
     internal class UdsHttpClientFactory : IUdsHttpClientFactory
     {
-        private readonly CancellationToken _cancellationToken;
-
-        public UdsHttpClientFactory(CancellationToken cancellationToken = default)
+        public HttpClient CreateHttpClientForSocket(string socketAddress, CancellationToken cancellationToken)
         {
-            _cancellationToken = cancellationToken;
-        }
-
-        public HttpClient CreateHttpClientForSocket(string socketAddress)
-        {
-            if (_cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
             {
                 throw new InvalidOperationException("Cannot create UdsHttpClients with canceled tokens");
             }
@@ -27,7 +20,7 @@ namespace SecretManager.Host
                 {
                     var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
                     var endpoint = new UnixDomainSocketEndPoint(socketAddress);
-                    await socket.ConnectAsync(endpoint, _cancellationToken);
+                    await socket.ConnectAsync(endpoint, cancellationToken);
                     return new NetworkStream(socket, ownsSocket: true);
                 }
             });
