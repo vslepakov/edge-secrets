@@ -14,14 +14,11 @@ namespace SecretManager.Host
     {
         private const string IdentitySocketAddress = "/run/aziot/identityd.sock";
         private const string KeysSocketAddress = "/run/aziot/keyd.sock";
-
-        private readonly HttpClient _identityClient;
-        private readonly HttpClient _keysClient;
+        private readonly IUdsHttpClientFactory _udsHttpClientFactory;
 
         public IdentityServiceClient(IUdsHttpClientFactory udsHttpClientFactory)
         {
-            _identityClient = udsHttpClientFactory.CreateHttpClientForSocket(IdentitySocketAddress);
-            _keysClient = udsHttpClientFactory.CreateHttpClientForSocket(KeysSocketAddress);
+            _udsHttpClientFactory = udsHttpClientFactory;
         }
 
         public async Task<string> GetModuleConnectionStringAsync(long sasTokenLifeTime, CancellationToken cancellationToken = default)
@@ -39,7 +36,8 @@ namespace SecretManager.Host
         {
             Console.WriteLine("Getting Identity Info...");
 
-            var json = await _identityClient.GetStringAsync(@"http://identityd.sock/identities/identity?api-version=2020-09-01", cancellationToken);
+            using var identityClient = _udsHttpClientFactory.CreateHttpClientForSocket(IdentitySocketAddress, cancellationToken);
+            var json = await identityClient.GetStringAsync(@"http://identityd.sock/identities/identity?api-version=2020-09-01", cancellationToken);
 
             Console.WriteLine($"Identity Info: {json}");
 
@@ -76,7 +74,8 @@ namespace SecretManager.Host
             request.Content = new StringContent(JsonConvert.SerializeObject(payload));
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
 
-            var response = await _keysClient.SendAsync(request, cancellationToken);
+            using var keysClient = _udsHttpClientFactory.CreateHttpClientForSocket(KeysSocketAddress, cancellationToken);
+            var response = await keysClient.SendAsync(request, cancellationToken);
             var json = await response.Content.ReadAsStringAsync(cancellationToken);
             var signature = JObject.Parse(json)["signature"];
 
