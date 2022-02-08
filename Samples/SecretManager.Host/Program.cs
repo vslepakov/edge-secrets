@@ -6,7 +6,6 @@
     using global::SecretManager.Host;
     using InfluxDB.Client;
     using Microsoft.Azure.Devices.Client;
-    using Microsoft.Net.Http.Headers;
 
     class Program
     {
