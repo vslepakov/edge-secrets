@@ -139,7 +139,7 @@ Run the following commands.
   ```bash
   sudo iotedge logs sampleApp --since 5m
   ```
-  
+
   This will show logging information similar to:
   ![](../images/influxdb-sample-ok.png)
 
@@ -177,4 +177,53 @@ ContainerAppConsoleLogs_CL
 
 
 
+
+# Azure IoT Identity Service sample
+
+IoT Edge 1.2.x already comes bundled with Azure IoT Identity Service. If you prefer a standalone installation, please follow [these instructions](https://azure.github.io/iot-identity-service/) to install and configure it. To ensure your process can access the Identity Service make sure to configure [client authorization](https://azure.github.io/iot-identity-service/develop-an-agent.html#client-authorization) for identityd and keyd. `/etc/aziot/identityd/config.d/mymodule.toml`could look like this:
+
+```bash
+[[principal]]
+uid = 1000
+name = "mymodule"
+idtype = ["module"]
+```
+
+and `/etc/aziot/keyd/config.d/mymodule.toml` like this:
+
+```bash
+[[principal]]
+uid = 1000
+keys = ["mysymmtestkey"]
+```
+
+Next step is to let the Identity Service generate a symmetric key which will be used to encrypt the secrets at rest. Use [this API](https://azure.github.io/iot-identity-service/api/keys-service.html#generate-new-symmetric-key) to do this:
+
+```bash
+curl -X POST -H 'Content-Type: application/json' -d '{"keyId": "mysymmtestkey", "usage": "encrypt"}'  --unix-socket /run/aziot/keyd.sock http://keyd.sock/key?api-version=2020-09-01
+```
+
+Start InfluxDb container e.g. like this:
+
+```bash
+docker run -p 8086:8086 \
+      -v influxdb:/var/lib/influxdb \
+      -v influxdb2:/var/lib/influxdb2 \
+      -e DOCKER_INFLUXDB_INIT_MODE=setup \
+      -e DOCKER_INFLUXDB_INIT_USERNAME=my-user \
+      -e DOCKER_INFLUXDB_INIT_PASSWORD=P@ssw0rd \
+      -e DOCKER_INFLUXDB_INIT_ORG=my-org \
+      -e DOCKER_INFLUXDB_INIT_BUCKET=my-bucket \
+      influxdb:2.0
+```
+
+ Run [the sample](../Samples/SecretManager.Host) providing the following environment variables:
+
+```bash
+EDGESECRET_KEYID=mysymmtestkey
+EDGESECRET_CRYPTO_PROVIDER=IdentityService
+INFLUXDB_URL=http://localhost:8086
+INFLUXDB_ORG=my-org
+INFLUXDB_BUCKET=my-bucket
+```
 

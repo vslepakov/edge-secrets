@@ -6,12 +6,14 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Transport.Mqtt;
-    using Microsoft.Data.SqlClient;
     using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
+    using InfluxDB.Client;
 
     class Program
     {
+        private static ModuleClient _moduleClient;
+
         static void Main(string[] args)
         {
             Init().Wait();
@@ -52,8 +54,9 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             ITransportSettings[] settings = { mqttSetting };
 
             // Open a connection to the Edge runtime
-            ModuleClient ioTHubModuleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
-            await ioTHubModuleClient.OpenAsync();
+            _moduleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
+            await _moduleClient.OpenAsync();
+
             Console.WriteLine("IoT Hub module client initialized.");
         }
 
@@ -66,28 +69,43 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
 
             string secretsFile = "/usr/local/cache/secrets.json";
             var secretManagerClient = new SecretManagerClient()
-                .WithRemoteSecretStore(TransportType.Mqtt_Tcp_Only, new ClientOptions())
+                .WithRemoteSecretStore(_moduleClient)
                 .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
                 .WithInMemorySecretStore();
             Console.WriteLine("Secret manager client created.");
 
-            string? dbConnectionString = await secretManagerClient.GetSecretValueAsync("FabrikamConnectionString", null, DateTime.Now);
-            if (!string.IsNullOrEmpty(dbConnectionString))
+            var dbPassword = await secretManagerClient.GetSecretValueAsync("InfluxDbPassword", null, DateTime.Now);
+
+            if (!string.IsNullOrEmpty(dbPassword))
             {
-                Console.WriteLine($"Valid database connection string found.");
+                Console.WriteLine($"Valid secret found.");
 
-                using SqlConnection connection = new SqlConnection(dbConnectionString);
-                String sql = "SELECT ProductID, Name, ProductNumber, Color, Size, Weight FROM [SalesLT].[Product]";
+                string url      = "http://influxdb:8086";
+                string org      = "my-org";
+                string bucket   = "my-bucket";
+                string username = "my-user";
+                
+                var influxDBClient = InfluxDBClientFactory.Create(url, username, dbPassword.ToCharArray());
 
-                using SqlCommand command = new SqlCommand(sql, connection);
-                connection.Open();
+                //
+                // Query data
+                //
+                var flux = String.Format($"from(bucket:\"{bucket}\") |> range(start: 0)");
 
-                using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
+                var fluxTables = await influxDBClient.GetQueryApi().QueryAsync(flux, org);
+                fluxTables.ForEach(fluxTable =>
                 {
-                    Console.WriteLine($"{reader.GetInt32(0)} {reader.GetString(1)} {reader.GetString(2)}");
-                }
+                    var fluxRecords = fluxTable.Records;
+                    fluxRecords.ForEach(fluxRecord =>
+                    {
+                        Console.WriteLine($"{fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
+                    });
+                });
+
+                influxDBClient.Dispose();
             }
+            else
+                Console.WriteLine($"ERROR, no secret found!");
         }
     }
 }

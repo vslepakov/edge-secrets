@@ -12,10 +12,9 @@ namespace EdgeSecrets.SecretManager
     public static class RemoteSecretStoreExtensions
     {
         public static SecretManagerClient WithRemoteSecretStore(this SecretManagerClient client,
-            TransportType transportType, ClientOptions clientOptions,
-            ICryptoProvider? cryptoProvider = null, string? keyId = default)
+            ModuleClient moduleClient, ICryptoProvider? cryptoProvider = null, string? keyId = default)
         {
-            var secretStore = new RemoteSecretStore(transportType, clientOptions, client.SecretStore, cryptoProvider, keyId);
+            var secretStore = new RemoteSecretStore(moduleClient, client.SecretStore, cryptoProvider, keyId);
             client.SecretStore = secretStore;
             return client;
         }
@@ -30,31 +29,26 @@ namespace EdgeSecrets.SecretManager
         }
 
         private int _timeout = 10000; // 10s
-        private TransportType _transportType;
-        private ClientOptions? _clientOptions;
         private ModuleClient? _moduleClient = null;
         private Dictionary<string, PendingRequest> _pendingRequests = new();
 
-        public RemoteSecretStore(TransportType transportType, ClientOptions clientOptions,
+        public RemoteSecretStore(ModuleClient moduleClient,
             ISecretStore? secretStore, ICryptoProvider? cryptoProvider = null, string? keyId = default)
             : base(secretStore, cryptoProvider, keyId)
         {
-            _transportType = transportType;
-            _clientOptions = clientOptions;
+            _moduleClient = moduleClient;
         }
 
         #region ModuleClient handling
+
         protected async Task<bool> InitializeModuleClient(CancellationToken cancellationToken)
         {
-            if (_moduleClient == null)
+            if (_moduleClient != null)
             {
-                _moduleClient = await ModuleClient.CreateFromEnvironmentAsync(_transportType, _clientOptions);
-                if (_moduleClient != null)
-                {
-                    await _moduleClient.SetMethodHandlerAsync("UpdateSecrets", HandleUpdateSecretsCommand, this, cancellationToken);
-                    return true;
-                }
+                await _moduleClient.SetMethodHandlerAsync("UpdateSecrets", HandleUpdateSecretsCommand, this, cancellationToken);
+                return true;
             }
+
             return false;
         }
 
@@ -78,6 +72,7 @@ namespace EdgeSecrets.SecretManager
 
             return await Task.FromResult(new MethodResponse(200));
         }
+
         #endregion
 
         /// <summary>

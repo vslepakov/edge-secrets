@@ -2,56 +2,80 @@
 {
     using System;
     using System.Threading.Tasks;
-    using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
+    using global::SecretManager.Host;
+    using InfluxDB.Client;
+    using Microsoft.Azure.Devices.Client;
 
     class Program
     {
-        static async Task GetSecretAsync()
-        {
-            string? KEY_ID = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
+        private const string SecretsFile = "/usr/local/cache/secrets.json";
+        private static readonly long SasTokenLifeTime = DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds();
 
-            var cryptoProvider = new AzureKeyVaultCryptoProvider();
-
-            string secretsFile = "/usr/local/cache/secrets.json";
-
-            var manager = new SecretManagerClient()
-                .WithFileSecretStore(secretsFile, cryptoProvider)
-                .WithInMemorySecretStore();
-
-            Console.WriteLine($"EdgeSecret test using Crypte Provider {cryptoProvider}");
-
-            string keyA = "test";
-
-            await manager.SetSecretValueAsync(keyA, "1234");
-            string? valueA1 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA1}'");
-
-            string? valueA2 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA2}'");
-
-            await manager.SetSecretValueAsync(keyA, "abcdef");
-            string? valueA3 = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyA}' has value '{valueA3}'");
-
-            string keyB = "secret";
-
-            await manager.SetSecretValueAsync(keyB, "azure");
-            string? valueB1 = await manager.GetSecretValueAsync(keyB, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyB}' has value '{valueB1}'");
-
-            string? valueB2 = await manager.GetSecretValueAsync(keyB, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyB}' has value '{valueB2}'");
-
-            await manager.SetSecretValueAsync(keyB, "veryverysecret");
-            string? valueB3 = await manager.GetSecretValueAsync(keyB, null, DateTime.Now);
-            Console.WriteLine($"Key '{keyB}' has value '{valueB3}'");
-        }
-
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine("SecretManager test");
-            GetSecretAsync().GetAwaiter().GetResult();
+            await ReadDatabaseAsync();
+        }
+
+        private static async Task ReadDatabaseAsync()
+        {
+            Console.WriteLine("Get data from database.");
+
+            var cryptoProvider = Configuration.CryptoProvider;
+            var udsHttpClientFactory = new UdsHttpClientFactory();
+            var identityServiceClient = new IdentityServiceClient(udsHttpClientFactory);
+
+            var connectionString = await identityServiceClient.GetModuleConnectionStringAsync(SasTokenLifeTime);
+            var moduleClient = ModuleClient.CreateFromConnectionString(connectionString);
+
+            Console.WriteLine($"Using Crypto Provider {cryptoProvider?.GetType()}");
+
+            var secretManagerClient = new SecretManagerClient()
+                .WithRemoteSecretStore(moduleClient)
+                .WithFileSecretStore(SecretsFile, cryptoProvider, Configuration.KeyId)
+                .WithInMemorySecretStore();
+
+            Console.WriteLine("Secret manager client created.");
+
+            var dbUsername = await secretManagerClient.GetSecretValueAsync("InfluxDbUsername", null, DateTime.Now);
+            var dbPassword = await secretManagerClient.GetSecretValueAsync("InfluxDbPassword", null, DateTime.Now);
+
+            if (string.IsNullOrEmpty(dbUsername))
+            {
+                Console.WriteLine($"ERROR, no username found!");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(dbPassword))
+            {
+                Console.WriteLine($"ERROR, no password found!");
+                return;
+            }
+
+            Console.WriteLine($"Valid secret found.");
+
+            InfluxDBClient influxDBClient = null;
+
+            try
+            {
+                influxDBClient = InfluxDBClientFactory.Create(Configuration.InfluxDbUrl, dbUsername, dbPassword.ToCharArray());
+                var flux = string.Format($"from(bucket:\"{Configuration.InfluxDbBucket}\") |> range(start: 0)");
+                var fluxTables = await influxDBClient.GetQueryApi().QueryAsync(flux, Configuration.InfluxDbOrg);
+
+                fluxTables.ForEach(fluxTable =>
+                {
+                    var fluxRecords = fluxTable.Records;
+                    fluxRecords.ForEach(fluxRecord =>
+                    {
+                        Console.WriteLine($"{fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
+                    });
+                });
+            }
+            finally
+            {
+                influxDBClient?.Dispose();
+            }
         }
     }
 }
