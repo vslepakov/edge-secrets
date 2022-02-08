@@ -8,15 +8,12 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
     using Microsoft.Azure.Devices.Client.Transport.Mqtt;
     using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
-
     using InfluxDB.Client;
-    using InfluxDB.Client.Api.Domain;
-    using InfluxDB.Client.Core;
-    using InfluxDB.Client.Writes;
 
     class Program
     {
-        
+        private static ModuleClient _moduleClient;
+
         static void Main(string[] args)
         {
             Init().Wait();
@@ -57,12 +54,11 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             ITransportSettings[] settings = { mqttSetting };
 
             // Open a connection to the Edge runtime
-            ModuleClient ioTHubModuleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
-            await ioTHubModuleClient.OpenAsync();
+            _moduleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
+            await _moduleClient.OpenAsync();
+
             Console.WriteLine("IoT Hub module client initialized.");
         }
-
-        
 
         static async Task ReadDatabase()
         {
@@ -73,12 +69,13 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
 
             string secretsFile = "/usr/local/cache/secrets.json";
             var secretManagerClient = new SecretManagerClient()
-                .WithRemoteSecretStore(TransportType.Mqtt_Tcp_Only, new ClientOptions())
+                .WithRemoteSecretStore(_moduleClient)
                 .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
                 .WithInMemorySecretStore();
             Console.WriteLine("Secret manager client created.");
 
-            string? dbPassword = await secretManagerClient.GetSecretValueAsync("InfluxDbPassword", null, DateTime.Now);
+            var dbPassword = await secretManagerClient.GetSecretValueAsync("InfluxDbPassword", null, DateTime.Now);
+
             if (!string.IsNullOrEmpty(dbPassword))
             {
                 Console.WriteLine($"Valid secret found.");
@@ -110,7 +107,5 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
             else
                 Console.WriteLine($"ERROR, no secret found!");
         }
-
-        
     }
 }
