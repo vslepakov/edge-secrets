@@ -10,7 +10,7 @@ To embed the SecretManager in your application:
 * create a CryptoProvider (see [here](../CryptoProvider/README.md) for more information):
     ```c#
     cryptoProvider = new WorkloadApiCryptoProvider(initializationVector);
-
+    
     // other options
     // cryptoProvider = new IdentityServiceCryptoProvider();
     // cryptoProvider = new AzureKeyVaultCryptoProvider();
@@ -20,18 +20,28 @@ To embed the SecretManager in your application:
     ```c#
     string secretsFile  = "/usr/local/cache/secrets.json";
     string keyId        = "my-key-id";
-
+    
+    // IoT Edge
+    var mqttSetting = new MqttTransportSettings(TransportType.Mqtt_Tcp_Only);
+    ITransportSettings[] settings = { mqttSetting };
+    var moduleClient = await ModuleClient.CreateFromEnvironmentAsync(settings);
+    
+    OR
+    
+    // Identity Service
+    var moduleClient = ModuleClient.CreateFromConnectionString(connectionString);
+    
     var secretManagerClient = new SecretManagerClient()
-        .WithRemoteSecretStore(TransportType.Mqtt_Tcp_Only, new ClientOptions())
+        .WithRemoteSecretStore(moduleClient)
         .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
         .WithInMemorySecretStore();
         
     Console.WriteLine("Secret manager client created.");
     ```
-
+    
 * get a secret:
     ```c#
-    string? mySecretValue = await secretManagerClient.GetSecretValueAsync("mySecretName", null, DateTime.Now);
+    var mySecretValue = await secretManagerClient.GetSecretValueAsync("mySecretName", null, DateTime.Now);
     ```
 
 ## Samples and demos
