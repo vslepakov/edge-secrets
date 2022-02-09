@@ -37,12 +37,10 @@ cd deployment
 
 ![](../images/samples-cloud-solution-diagram.png)
 
-# create a secret in KV
-The sample application [sampleApp.Edge.Influxdb](../Samples/SecretManager.Edge.Influxdb/Program.cs) will fetch the secret "InfluxDbPassword" from the Azure Key-Vault and will use it as password to access the sample InfluxDB.
+# create secrets in Azure KeyVault
+The sample application [SecretManager.Edge](../Samples/SecretManager.Edge/Program.cs) will fetch the secret "InfluxDbUsername" and "InfluxDbPassword" from the Azure KeyVault and will use it to access the sample InfluxDB.
 
-Let's create the "InfluxDbPassword" secret.
-
-First, you may need to grant your user access to the Key-Vault.
+First, you may need to grant your user access to the KeyVault.
 ```bash
 # your user name
 USER_NAME="<mail>" #example: "me@microsoft.com"
@@ -55,10 +53,13 @@ MY_OBJECT_ID=$(az ad user show --id "$USER_NAME" --query objectId -o tsv)
 az keyvault set-policy --name $KV_NAME --object-id $MY_OBJECT_ID --secret-permissions delete get list set
 ```
 
-Then, create the secret "InfluxDbPassword" with value "my-password"
+Then, create the secrets
 ```bash
 # create the secret "InfluxDbPassword"
 az keyvault secret set --name "InfluxDbPassword" --vault-name $KV_NAME --value "my-password"
+
+# create the secret "InfluxDbUsername"
+az keyvault secret set --name "InfluxDbUsername" --vault-name $KV_NAME --value "my-user"
 ```
 
 # provision an iot edge 
@@ -78,6 +79,7 @@ curl -L https://raw.githubusercontent.com/arlotito/vm-iotedge-provision/dev/scri
 ```
 
 # deploy the edge solution
+
 1. create an ".env" file based on the [.env.sample](../Samples/.env.sample) file and edit it to point at your Azure Container Registry:
 
   ```bash
@@ -85,19 +87,18 @@ curl -L https://raw.githubusercontent.com/arlotito/vm-iotedge-provision/dev/scri
   ACR_USER=<myuser>
   ACR_PASSWORD=<mypassword>
 
-  EDGESECRET_KEYID="mysymmkey-1"
-  EDGESECRET_CRYPTO_PROVIDER="workload-api"
+  EDGESECRET_CRYPTO_PROVIDER="WorkloadApi"
   EDGESECRET_INIT_VECTOR="1234567890"
+  INFLUXDB_URL=http://localhost:8086
+  INFLUXDB_ORG=my-org
+  INFLUXDB_BUCKET=my-bucket
   ```
-2. build and push the [deployment.influxdb.template.json](../Samples/deployment.influxdb.template.json) edge solution
+2. build and push the [deployment.template.json](../Samples/deployment.template.json) edge solution
 3. deploy the solution to the iot edge vm
 
 This edge solution includes:
-* a module "influxdb", with an InfluxDB database server provisioned with:
-  * an admin user with username "my-user" and password "my-password"
-  * an empty bucket "my-bucket" in the organization "my-org"
-* a module "sampleApp", with a sample application that 
-  * will fetch the secret "InfluxDbPassword" from the AKV and will use it to connect to the InfluxDb server
+* a module "SecretManager", with a sample application that 
+  * will fetch the secrets "InfluxDbUsername" and "InfluxDbPassword" from the AKV (via IoT Hub) and will use it to connect to the InfluxDb server
   * will query and print the content of the bucket
 
 ![](../images/samples-edge-solution-diagram.png)
@@ -109,7 +110,23 @@ VM_NAME=$(az vm list -g $RG --query [0].name -o tsv)
 ssh azuser@$VM_NAME.northeurope.cloudapp.azure.com -i $HOME/.ssh/vmedge.key
 ```
 
+# run InfluxDb
+
+```bash
+docker run -p 8086:8086 \
+      -v influxdb:/var/lib/influxdb \
+      -v influxdb2:/var/lib/influxdb2 \
+      -e DOCKER_INFLUXDB_INIT_MODE=setup \
+      -e DOCKER_INFLUXDB_INIT_USERNAME=my-user \
+      -e DOCKER_INFLUXDB_INIT_PASSWORD=my-password \
+      -e DOCKER_INFLUXDB_INIT_ORG=my-org \
+      -e DOCKER_INFLUXDB_INIT_BUCKET=my-bucket \
+      --name influxdb \
+      influxdb:2.0
+```
+
 # populate influxdb
+
 populate influxdb with some datapoints:
 
 ```bash
@@ -125,19 +142,19 @@ Run the following commands.
 1. start the edge device and wait for all modules to be running
 2. get id of the docker container
   ```bash
-  containerid="$(sudo docker ps -aqf name=sampleApp)"
+  containerid="$(sudo docker ps -aqf name=SecretManager)"
   ```
 3. remove the container file cache
   ```bash
   sudo docker exec $containerid rm /usr/local/cache/secrets.json
   ```
-4. restart the sampleApp module
+4. restart the SecretManager module
   ```bash
-  sudo iotedge restart sampleApp
+  sudo iotedge restart SecretManager
   ```
-5. show the sampleApp module logs
+5. show the SecretManager module logs
   ```bash
-  sudo iotedge logs sampleApp --since 5m
+  sudo iotedge logs SecretManager --since 5m
   ```
 
   This will show logging information similar to:
@@ -173,57 +190,3 @@ ContainerAppConsoleLogs_CL
 ```
 
 ![](../images/secretdeliveryapp-logs.png)
-
-
-
-
-
-# Azure IoT Identity Service sample
-
-IoT Edge 1.2.x already comes bundled with Azure IoT Identity Service. If you prefer a standalone installation, please follow [these instructions](https://azure.github.io/iot-identity-service/) to install and configure it. To ensure your process can access the Identity Service make sure to configure [client authorization](https://azure.github.io/iot-identity-service/develop-an-agent.html#client-authorization) for identityd and keyd. `/etc/aziot/identityd/config.d/mymodule.toml`could look like this:
-
-```bash
-[[principal]]
-uid = 1000
-name = "mymodule"
-idtype = ["module"]
-```
-
-and `/etc/aziot/keyd/config.d/mymodule.toml` like this:
-
-```bash
-[[principal]]
-uid = 1000
-keys = ["mysymmtestkey"]
-```
-
-Next step is to let the Identity Service generate a symmetric key which will be used to encrypt the secrets at rest. Use [this API](https://azure.github.io/iot-identity-service/api/keys-service.html#generate-new-symmetric-key) to do this:
-
-```bash
-curl -X POST -H 'Content-Type: application/json' -d '{"keyId": "mysymmtestkey", "usage": "encrypt"}'  --unix-socket /run/aziot/keyd.sock http://keyd.sock/key?api-version=2020-09-01
-```
-
-Start InfluxDb container e.g. like this:
-
-```bash
-docker run -p 8086:8086 \
-      -v influxdb:/var/lib/influxdb \
-      -v influxdb2:/var/lib/influxdb2 \
-      -e DOCKER_INFLUXDB_INIT_MODE=setup \
-      -e DOCKER_INFLUXDB_INIT_USERNAME=my-user \
-      -e DOCKER_INFLUXDB_INIT_PASSWORD=P@ssw0rd \
-      -e DOCKER_INFLUXDB_INIT_ORG=my-org \
-      -e DOCKER_INFLUXDB_INIT_BUCKET=my-bucket \
-      influxdb:2.0
-```
-
- Run [the sample](../Samples/SecretManager.Host) providing the following environment variables:
-
-```bash
-EDGESECRET_KEYID=mysymmtestkey
-EDGESECRET_CRYPTO_PROVIDER=IdentityService
-INFLUXDB_URL=http://localhost:8086
-INFLUXDB_ORG=my-org
-INFLUXDB_BUCKET=my-bucket
-```
-

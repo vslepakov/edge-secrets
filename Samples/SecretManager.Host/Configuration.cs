@@ -11,13 +11,13 @@ namespace SecretManager.Host
         { 
             get
             {
-                var provider = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER");
+                var cryptoProviderName = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER");
 
-                return provider switch
+                return cryptoProviderName switch
                 {
                     "AzureKeyVault" => new AzureKeyVaultCryptoProvider(),
                     "IdentityService" => new IdentityServiceCryptoProvider(),
-                    _ => new IdentityServiceCryptoProvider(),
+                    _ => throw new ArgumentException($"'{cryptoProviderName}' is not a supported crypto provider");,
                 };
             } 
         }
