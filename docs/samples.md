@@ -14,8 +14,8 @@ After building and installing the module, and setting upo the cloud components, 
 
    ```bash
    docker run -p 8086:8086 \
-         -v influxdb:/var/lib/influxdb \
-         -v influxdb2:/var/lib/influxdb2 \
+         -v /var/lib/influxdb/config:/etc/influxdb2 \
+         -v /var/lib/influxdb/data:/var/lib/influxdb2 \
          -e DOCKER_INFLUXDB_INIT_MODE=setup \
          -e DOCKER_INFLUXDB_INIT_USERNAME=my-user \
          -e DOCKER_INFLUXDB_INIT_PASSWORD=my-password \
