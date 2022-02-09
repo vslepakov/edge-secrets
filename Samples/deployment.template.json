@@ -47,23 +47,20 @@
                 "createOptions": "{}"
               },
               "env": {
-                "AZURE_CLIENT_ID": {
-                  "value": "$AZURE_CLIENT_ID"
-                },
-                "AZURE_TENANT_ID": {
-                  "value": "$AZURE_TENANT_ID"
-                },
-                "AZURE_CLIENT_SECRET": {
-                  "value": "$AZURE_CLIENT_SECRET"
-                },
-                "EDGESECRET_KEYID": {
-                  "value": "$EDGESECRET_KEYID"
-                },
                 "EDGESECRET_CRYPTO_PROVIDER": {
                   "value": "$EDGESECRET_CRYPTO_PROVIDER"
                 },
                 "EDGESECRET_INIT_VECTOR": {
                   "value": "$EDGESECRET_INIT_VECTOR"
+                },
+                "INFLUXDB_URL": {
+                  "value": "$INFLUXDB_URL"
+                },
+                "INFLUXDB_ORG": {
+                  "value": "$INFLUXDB_ORG"
+                },
+                "INFLUXDB_BUCKET": {
+                  "value": "$INFLUXDB_BUCKET"
                 }
               }
             }

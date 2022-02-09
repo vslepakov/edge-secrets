@@ -5,37 +5,38 @@
 
     internal class Configuration
     {
-        public static (ICryptoProvider?, string?) GetCryptoProvider()
+        public static string KeyId => Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
+
+        public static ICryptoProvider CryptoProvider
         {
-            string? keyId = Environment.GetEnvironmentVariable("EDGESECRET_KEYID");
-            string? cryptoProviderName = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER") ?? "none";
-
-            ICryptoProvider? cryptoProvider;
-            switch (cryptoProviderName)
+            get
             {
-                case "none":
-                    cryptoProvider = default;
-                    keyId = default;
-                    break;
-                case "identity-service":
-                    cryptoProvider = new IdentityServiceCryptoProvider();
-                    break;
-                case "workload-api":
-                    string? initializationVector = Environment.GetEnvironmentVariable("EDGESECRET_INIT_VECTOR");
-                    if (initializationVector != null)
-                    {
-                        Console.WriteLine($"Using initialization vector {initializationVector}");
-                    }
-                    cryptoProvider = new WorkloadApiCryptoProvider(initializationVector);
-                    break;
-                case "azure-kv":
-                    cryptoProvider = new AzureKeyVaultCryptoProvider();
-                    break;
-                default:
-                    throw new ArgumentException($"'{cryptoProviderName}' is not a supported crypto provider");
-            };
+                var cryptoProviderName = Environment.GetEnvironmentVariable("EDGESECRET_CRYPTO_PROVIDER");
+                return cryptoProviderName switch
+                {
+                    "AzureKeyVault" => new AzureKeyVaultCryptoProvider(),
+                    "WorkloadApi" => GetWorkloadApiCryptoProvider(),
+                    _ => throw new ArgumentException($"'{cryptoProviderName}' is not a supported crypto provider")
+                };
+            }
+        }
 
-            return (cryptoProvider, keyId);
+        public static string InfluxDbUrl => Environment.GetEnvironmentVariable("INFLUXDB_URL");
+
+        public static string InfluxDbOrg => Environment.GetEnvironmentVariable("INFLUXDB_ORG");
+
+        public static string InfluxDbBucket => Environment.GetEnvironmentVariable("INFLUXDB_BUCKET");
+
+        private static ICryptoProvider GetWorkloadApiCryptoProvider()
+        {
+            var initializationVector = Environment.GetEnvironmentVariable("EDGESECRET_INIT_VECTOR");
+
+            if (initializationVector != null)
+            {
+                Console.WriteLine($"Using initialization vector {initializationVector}");
+            }
+
+            return new WorkloadApiCryptoProvider(initializationVector);
         }
     }
 }

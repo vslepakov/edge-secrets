@@ -6,12 +6,12 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Transport.Mqtt;
-    using EdgeSecrets.CryptoProvider;
     using EdgeSecrets.SecretManager;
     using InfluxDB.Client;
 
     class Program
     {
+        private const string SecretsFile = "/usr/local/cache/secrets.json";
         private static ModuleClient _moduleClient;
 
         static void Main(string[] args)
@@ -64,35 +64,41 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
         {
             Console.WriteLine("Get data from database.");
 
-            (ICryptoProvider? cryptoProvider, string? keyId) = Configuration.GetCryptoProvider();
+            var cryptoProvider = Configuration.CryptoProvider;
             Console.WriteLine($"Using Crypto Provider {cryptoProvider?.GetType()}");
 
-            string secretsFile = "/usr/local/cache/secrets.json";
             var secretManagerClient = new SecretManagerClient()
                 .WithRemoteSecretStore(_moduleClient)
-                .WithFileSecretStore(secretsFile, cryptoProvider, keyId)
+                .WithFileSecretStore(SecretsFile, cryptoProvider, Configuration.KeyId)
                 .WithInMemorySecretStore();
+
             Console.WriteLine("Secret manager client created.");
 
+            var dbUsername = await secretManagerClient.GetSecretValueAsync("InfluxDbUsername", null, DateTime.Now);
             var dbPassword = await secretManagerClient.GetSecretValueAsync("InfluxDbPassword", null, DateTime.Now);
 
-            if (!string.IsNullOrEmpty(dbPassword))
+            if (string.IsNullOrEmpty(dbUsername))
             {
-                Console.WriteLine($"Valid secret found.");
+                Console.WriteLine($"ERROR, no username found!");
+                return;
+            }
 
-                string url      = "http://influxdb:8086";
-                string org      = "my-org";
-                string bucket   = "my-bucket";
-                string username = "my-user";
-                
-                var influxDBClient = InfluxDBClientFactory.Create(url, username, dbPassword.ToCharArray());
+            if (string.IsNullOrEmpty(dbPassword))
+            {
+                Console.WriteLine($"ERROR, no password found!");
+                return;
+            }
 
-                //
-                // Query data
-                //
-                var flux = String.Format($"from(bucket:\"{bucket}\") |> range(start: 0)");
+            Console.WriteLine($"Valid secret found.");
 
-                var fluxTables = await influxDBClient.GetQueryApi().QueryAsync(flux, org);
+            InfluxDBClient influxDBClient = null;
+
+            try
+            {
+                influxDBClient = InfluxDBClientFactory.Create(Configuration.InfluxDbUrl, dbUsername, dbPassword.ToCharArray());
+                var flux = string.Format($"from(bucket:\"{Configuration.InfluxDbBucket}\") |> range(start: 0)");
+                var fluxTables = await influxDBClient.GetQueryApi().QueryAsync(flux, Configuration.InfluxDbOrg);
+
                 fluxTables.ForEach(fluxTable =>
                 {
                     var fluxRecords = fluxTable.Records;
@@ -101,11 +107,11 @@ namespace EdgeSecrets.Samples.SecretManager.Edge
                         Console.WriteLine($"{fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
                     });
                 });
-
-                influxDBClient.Dispose();
             }
-            else
-                Console.WriteLine($"ERROR, no secret found!");
+            finally
+            {
+                influxDBClient?.Dispose();
+            }
         }
     }
 }
