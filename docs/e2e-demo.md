@@ -173,7 +173,7 @@ Run the following commands.
 
   You will get something like:
   ```
-  {"InfluxDbPassword":{"6769a77965264fa9a41b6b6e5d64654e":{"Name":"InfluxDbPassword","Value":"AiRdKfOVR5nrp4hC4X\u002BYr/CQMynmnQ76bipeQ4wJOP/vLPNYYj12dTAG3doSVT14GxAPCs08aD6v\u002BTkUK5XK7OJ7XmPx\u002Bbj92fH5mZ6716WiEtIzGlAGOXYn\u002BJ3L7edy5Tb45SkUMTGgB14QQqV1qWL79HPtM/vaKFX5VEIVigqzSCTANXGJwE5Ktvx1DTev3eNSyhuNoPHO7pRf8/PDOhmqWZ2Sut8ZZIpopPraKEUE7WirXPtse64ZjBn13lLzsH02BbgGsZVW65Y49iOxpacvtEoy/ARlnQQkUgbCaJYbH3p2d51PUhOiTZLjSDjelvafc5kirvE\u002BGHdQyEORT\u002BRilEll","Version":"6769a77965264fa9a41b6b6e5d64654e","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}}}
+  {"InfluxDbUsername":{"4c70b874c8bf4035938280b36a2dc92e":{"Name":"InfluxDbUsername","Value":"AuUG/VWdsBg3zMsTg3Uqom/DPqduJk6Q","Version":"4c70b874c8bf4035938280b36a2dc92e","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}},"InfluxDbPassword":{"0ef47aab7e464c03b38431e691668977":{"Name":"InfluxDbPassword","Value":"Atg/o1OZ5RhZ8vnfYy8GVBLyu5msGNSHVQ==","Version":"0ef47aab7e464c03b38431e691668977","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}}}
   ```
 
 # view the SecretDeliveryApp logs

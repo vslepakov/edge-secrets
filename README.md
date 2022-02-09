@@ -12,10 +12,6 @@ The Edge Secret Management solution includes:
 2. the [SecretDeliveryApp](./SecretDeliveryApp/) app, which is responsible for retrieving the secrets from an Azure KeyVault and for delivering them to the SecretManager. Requests are sent by the edge SecretManager as a telemetry message via the Azure IoT Hub using this [contract](./docs/contracts.md).
 
 
-## Use Cases
-* ...
-
-
 ## Get Started
 * deploy and run the [end-2-end demo](./docs/e2e-demo.md)
 * embed the [SecretManager](./SecretManager/) in your own application
@@ -36,7 +32,6 @@ Here are **some** of the challenges that we identified while looking at the prob
    - Scalability of the service to serve a high number of devices
    - Need for an additional secret to access the service
    - Is the RBAC mechanism used by the service enough and how does is scale with a growing number of devices?
-   - ...
 
 ## Known Issues
 * [end-2-end demo](./docs/e2e-demo.md): we noticed that the SecretDelivery app occasionally fails (i.e. shutdowns/reboots) because of NGINX, which is used by the the [Azure Container Apps](https://azure.microsoft.com/en-us/services/container-apps/) at the ingress. The root cause may be occasional failures of the Azure Container Apps service, which is still in preview. That's just an educated guess and we didn't investigate it further.
