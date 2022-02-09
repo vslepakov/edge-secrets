@@ -17,7 +17,7 @@ namespace SecretManager.Host
                 {
                     "AzureKeyVault" => new AzureKeyVaultCryptoProvider(),
                     "IdentityService" => new IdentityServiceCryptoProvider(),
-                    _ => throw new ArgumentException($"'{cryptoProviderName}' is not a supported crypto provider");,
+                    _ => throw new ArgumentException($"'{cryptoProviderName}' is not a supported crypto provider")
                 };
             } 
         }
