@@ -89,7 +89,7 @@ curl -L https://raw.githubusercontent.com/arlotito/vm-iotedge-provision/dev/scri
 
   EDGESECRET_CRYPTO_PROVIDER="WorkloadApi"
   EDGESECRET_INIT_VECTOR="1234567890"
-  INFLUXDB_URL=http://localhost:8086
+  INFLUXDB_URL=http://<IP Address or Hostname>:8086
   INFLUXDB_ORG=my-org
   INFLUXDB_BUCKET=my-bucket
   ```

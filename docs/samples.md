@@ -111,7 +111,7 @@ curl -X POST -H 'Content-Type: application/json' -d '{"keyId": "mysymmtestkey", 
 ```bash
 EDGESECRET_KEYID=mysymmtestkey
 EDGESECRET_CRYPTO_PROVIDER=IdentityService
-INFLUXDB_URL=http://localhost:8086
+INFLUXDB_URL=http://<IP Address or Hostname>:8086
 INFLUXDB_ORG=my-org
 INFLUXDB_BUCKET=my-bucket
 ```
