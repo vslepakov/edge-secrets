@@ -133,7 +133,7 @@ You have two options.
 
     Set the resource group you have deployed the solution to:
     ```bash
-    RG="<my-edge-secrets-solution-rg"
+    RG="<my-edge-secrets-solution-rg>"
     ```
 
     Get the InfluxDb username and password from the AKV:
