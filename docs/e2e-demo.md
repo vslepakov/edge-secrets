@@ -110,15 +110,49 @@ VM_NAME=$(az vm list -g $RG --query [0].name -o tsv)
 ssh azuser@$VM_NAME.northeurope.cloudapp.azure.com -i $HOME/.ssh/vmedge.key
 ```
 
-# run InfluxDb
+# Set InfluxDb username and password
+You have two options.
+
+1. Set the username and password manually:
+    ```bash
+    INFLUXDB_USERNAME=<my-user>
+    INFLUXDB_PASSWORD=<my-password>
+    ```
+
+2. Get username and password from Azure KeyVault:
+
+    Install the az cli ([here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux)):
+    ```bash
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    ```
+
+    Log in to your Azure account:
+    ```bash
+    az login
+    ```
+
+    Set the resource group you have deployed the solution to:
+    ```bash
+    RG="<my-edge-secrets-solution-rg"
+    ```
+
+    Get the InfluxDb username and password from the AKV:
+    ```bash
+    KV_NAME=$(az keyvault list -g "$RG" --query [0].name -o tsv)
+    INFLUXDB_PASSWORD=$(az keyvault secret show --name "InfluxDbPassword" --vault-name $KV_NAME --query value -o tsv)
+    INFLUXDB_USERNAME=$(az keyvault secret show --name "InfluxDbUsername" --vault-name $KV_NAME --query value -o tsv)
+    ```
+
+# Provision and run InfluxDb
+Run the InfluxDb container in "setup" mode, to automatically provision user, organization and bucket upon the first execution.
 
 ```bash
-docker run -p 8086:8086 \
+sudo docker run -d -p 8086:8086 \
       -v /var/lib/influxdb/config:/etc/influxdb2 \
       -v /var/lib/influxdb/data:/var/lib/influxdb2 \
       -e DOCKER_INFLUXDB_INIT_MODE=setup \
-      -e DOCKER_INFLUXDB_INIT_USERNAME=my-user \
-      -e DOCKER_INFLUXDB_INIT_PASSWORD=my-password \
+      -e DOCKER_INFLUXDB_INIT_USERNAME=$INFLUXDB_USERNAME \
+      -e DOCKER_INFLUXDB_INIT_PASSWORD=$INFLUXDB_PASSWORD \
       -e DOCKER_INFLUXDB_INIT_ORG=my-org \
       -e DOCKER_INFLUXDB_INIT_BUCKET=my-bucket \
       --name influxdb \
@@ -126,8 +160,7 @@ docker run -p 8086:8086 \
 ```
 
 # populate influxdb
-
-populate influxdb with some datapoints:
+Populate influxdb with some datapoints that will be queried by the sample application.
 
 ```bash
 containerid="$(sudo docker ps -aqf name=influxdb)"
