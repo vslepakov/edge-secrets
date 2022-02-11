@@ -160,7 +160,7 @@ sudo docker run -d -p 8086:8086 \
 ```
 
 ## populate influxdb
-Populate influxdb with some datapoints that will be queried by the sample application.
+Populate influxdb with some datapoints that will be queried by the sample SecretManager application.
 
 ```bash
 containerid="$(sudo docker ps -aqf name=influxdb)"
