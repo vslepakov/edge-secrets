@@ -87,28 +87,31 @@
         }
 
         /// <summary>
-        /// Set the value of a specific secret and version.
+        /// Set the values of the given secret.
         /// </summary>
-        /// <param name="name">Name of the secret to set.</param>
-        /// <param name="value">Value to set the secret to.</param>
-        /// <param name="version">Version of the secret to set.</param>
+        /// <param name="secret">Secret to set.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task SetSecretValueAsync(string name, string value, string? version, CancellationToken cancellationToken = default)
+        public async Task SetSecretAsync(Secret secret, CancellationToken cancellationToken = default)
         {
-            if (SecretStore != null)
+            if ((SecretStore != null) && (secret.Version != null))
             {
-                Secret? secret = await SecretStore.RetrieveSecretAsync(name, version, DateTime.UtcNow, false, cancellationToken);
-                if (secret != null)
-                {
-                    secret = secret with { Value = value };
-                }
-                else
-                {
-                    secret = new Secret(name, value, version);
-                }
                 await SecretStore.StoreSecretAsync(secret, cancellationToken);
             }
+        }
+
+        /// <summary>
+        /// Set the values of a specific secret and version.
+        /// </summary>
+        /// <param name="name">Name of the secret to set.</param>
+        /// <param name="version">Version of the secret to set.</param>
+        /// <param name="value">Value to set the secret to.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task SetSecretValueAsync(string name, string version, string value, CancellationToken cancellationToken = default)
+        {
+            Secret secret = new Secret(name, version, value);
+            await SetSecretAsync(secret, cancellationToken);
         }
     }
 }
