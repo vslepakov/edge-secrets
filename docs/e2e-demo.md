@@ -1,9 +1,9 @@
 ![](../images/e2e-demo-overall-diagram.png)
 
-# pre-requisite
+## pre-requisite
 An Azure Container Registry is required to run the demo.
 
-# deploy the cloud solution
+## deploy the cloud solution
 Deploy the cloud solution as explained in [deployment/README.md](../deployment/README.md), i.e.:
 
 ```bash
@@ -37,7 +37,7 @@ cd deployment
 
 ![](../images/samples-cloud-solution-diagram.png)
 
-# create secrets in Azure KeyVault
+## create secrets in Azure KeyVault
 The sample application [SecretManager.Edge](../Samples/SecretManager.Edge/Program.cs) will fetch the secret "InfluxDbUsername" and "InfluxDbPassword" from the Azure KeyVault and will use it to access the sample InfluxDB.
 
 First, you may need to grant your user access to the KeyVault.
@@ -62,7 +62,7 @@ az keyvault secret set --name "InfluxDbPassword" --vault-name $KV_NAME --value "
 az keyvault secret set --name "InfluxDbUsername" --vault-name $KV_NAME --value "my-user"
 ```
 
-# provision an iot edge 
+## provision an iot edge 
 Let's create a VM, install Azure IoT Edge 1.2 and connect it to the IoT Hub.
 
 ```bash
@@ -78,7 +78,7 @@ curl -L https://raw.githubusercontent.com/arlotito/vm-iotedge-provision/dev/scri
     -u "azuser"
 ```
 
-# deploy the edge solution
+## deploy the edge solution
 
 1. create an ".env" file based on the [.env.sample](../Samples/.env.sample) file and edit it to point at your Azure Container Registry:
 
@@ -103,31 +103,64 @@ This edge solution includes:
 
 ![](../images/samples-edge-solution-diagram.png)
 
-# ssh into the iot edge VM 
+## ssh into the iot edge VM 
 ```bash
 # connect to the iot edge VM
 VM_NAME=$(az vm list -g $RG --query [0].name -o tsv)
 ssh azuser@$VM_NAME.northeurope.cloudapp.azure.com -i $HOME/.ssh/vmedge.key
 ```
 
-# run InfluxDb
+## Set InfluxDb username and password
+You have two options.
+
+1. Set the username and password manually:
+    ```bash
+    INFLUXDB_USERNAME=<my-user>
+    INFLUXDB_PASSWORD=<my-password>
+    ```
+
+2. Get username and password from Azure KeyVault:
+
+    Install the az cli ([here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux)):
+    ```bash
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    ```
+
+    Log in to your Azure account:
+    ```bash
+    az login
+    ```
+
+    Set the resource group you have deployed the solution to:
+    ```bash
+    RG="<my-edge-secrets-solution-rg>"
+    ```
+
+    Get the InfluxDb username and password from the AKV:
+    ```bash
+    KV_NAME=$(az keyvault list -g "$RG" --query [0].name -o tsv)
+    INFLUXDB_PASSWORD=$(az keyvault secret show --name "InfluxDbPassword" --vault-name $KV_NAME --query value -o tsv)
+    INFLUXDB_USERNAME=$(az keyvault secret show --name "InfluxDbUsername" --vault-name $KV_NAME --query value -o tsv)
+    ```
+
+## Provision and run InfluxDb
+Run the InfluxDb container in "setup" mode, to automatically provision user, organization and bucket upon the first execution.
 
 ```bash
-docker run -p 8086:8086 \
+sudo docker run -d -p 8086:8086 \
       -v /var/lib/influxdb/config:/etc/influxdb2 \
       -v /var/lib/influxdb/data:/var/lib/influxdb2 \
       -e DOCKER_INFLUXDB_INIT_MODE=setup \
-      -e DOCKER_INFLUXDB_INIT_USERNAME=my-user \
-      -e DOCKER_INFLUXDB_INIT_PASSWORD=my-password \
+      -e DOCKER_INFLUXDB_INIT_USERNAME=$INFLUXDB_USERNAME \
+      -e DOCKER_INFLUXDB_INIT_PASSWORD=$INFLUXDB_PASSWORD \
       -e DOCKER_INFLUXDB_INIT_ORG=my-org \
       -e DOCKER_INFLUXDB_INIT_BUCKET=my-bucket \
       --name influxdb \
       influxdb:2.0
 ```
 
-# populate influxdb
-
-populate influxdb with some datapoints:
+## populate influxdb
+Populate influxdb with some datapoints that will be queried by the sample SecretManager application.
 
 ```bash
 containerid="$(sudo docker ps -aqf name=influxdb)"
@@ -136,7 +169,7 @@ sudo docker exec $containerid influx write -b my-bucket -o my-org -p s 'myMeasur
 sudo docker exec $containerid influx write -b my-bucket -o my-org -p s 'myMeasurement,host=myHost testField="testData3" 1556896469'
 ```
 
-# run the demo  
+## run the demo  
 Run the following commands.
 
 1. start the edge device and wait for all modules to be running
@@ -176,7 +209,7 @@ Run the following commands.
   {"InfluxDbUsername":{"4c70b874c8bf4035938280b36a2dc92e":{"Name":"InfluxDbUsername","Value":"AuUG/VWdsBg3zMsTg3Uqom/DPqduJk6Q","Version":"4c70b874c8bf4035938280b36a2dc92e","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}},"InfluxDbPassword":{"0ef47aab7e464c03b38431e691668977":{"Name":"InfluxDbPassword","Value":"Atg/o1OZ5RhZ8vnfYy8GVBLyu5msGNSHVQ==","Version":"0ef47aab7e464c03b38431e691668977","ActivationDate":"0001-01-01T00:00:00","ExpirationDate":"9999-12-31T23:59:59.9999999"}}}
   ```
 
-# view the SecretDeliveryApp logs
+## view the SecretDeliveryApp logs
 SecretDeliveryApp posts the logs into the table "ContainerAppConsoleLogs_CL" of Logs Analytics.
 
 Use the following query:

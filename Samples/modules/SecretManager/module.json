@@ -4,14 +4,10 @@
   "image": {
     "repository": "${ACR_ADDRESS}/edgesecrets/secretmanager",
     "tag": {
-      "version": "0.0.1",
+      "version": "0.0.10",
       "platforms": {
         "amd64": "./Dockerfile.amd64",
-        "amd64.debug": "./Dockerfile.amd64.debug",
-        "arm32v7": "./Dockerfile.arm32v7",
-        "arm32v7.debug": "./Dockerfile.arm32v7.debug",
-        "arm64v8": "./Dockerfile.arm64v8",
-        "arm64v8.debug": "./Dockerfile.arm64v8.debug"
+        "amd64.debug": "./Dockerfile.amd64.debug"
       }
     },
     "buildOptions": [],
