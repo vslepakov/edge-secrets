@@ -62,12 +62,54 @@
 
             // Act
             string secretName = "test";
-            await manager.SetSecretValueAsync(secretName, PLAINTEXT);
+            string secretVersion = "v1";
+            await manager.SetSecretValueAsync(secretName, secretVersion, PLAINTEXT);
             var secretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(secretValue));
             Assert.Equal(PLAINTEXT, secretValue);
+        }
+
+        [Fact]
+        public async Task Set_And_Get_Versioned_Secret_Using_InMemory_SecretStore_And_Test_Provider_Success()
+        {
+            // Arrange
+            var cryptoProvider = new TestCryptoProvider();
+
+            var manager = new SecretManagerClient()
+                .WithInMemorySecretStore(cryptoProvider);
+
+            string secretName = "test";
+
+            // Act
+            var secrets = await manager.GetSecretListAsync(new List<string>() { secretName});
+
+            string version1Name = "v1";
+            await manager.SetSecretValueAsync(secretName, version1Name, PLAINTEXT);
+            secrets = await manager.GetSecretListAsync(new List<string>() { secretName});
+            var version1SecretValue = await manager.GetSecretValueAsync(secretName, version1Name, DateTime.Now);
+            var anySecretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
+
+            // Assert
+            Assert.False(string.IsNullOrEmpty(version1SecretValue));
+            Assert.Equal(PLAINTEXT, version1SecretValue);
+            Assert.False(string.IsNullOrEmpty(anySecretValue));
+
+            // Act
+            string version2Name = "v2";
+            await manager.SetSecretValueAsync(secretName, version2Name, PLAINTEXT + PLAINTEXT);
+            secrets = await manager.GetSecretListAsync(new List<string>() { secretName});
+            version1SecretValue = await manager.GetSecretValueAsync(secretName, version1Name, DateTime.Now);
+            var version2SecretValue = await manager.GetSecretValueAsync(secretName, version2Name, DateTime.Now);
+            anySecretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
+
+            // Assert
+            Assert.False(string.IsNullOrEmpty(version1SecretValue));
+            Assert.Equal(PLAINTEXT, version1SecretValue);
+            Assert.False(string.IsNullOrEmpty(version2SecretValue));
+            Assert.Equal(PLAINTEXT + PLAINTEXT, version2SecretValue);
+            Assert.False(string.IsNullOrEmpty(anySecretValue));
         }
 
         [Fact]
@@ -80,7 +122,8 @@
 
             // Act
             string secretName = "test";
-            await manager.SetSecretValueAsync(secretName, PLAINTEXT);
+            string secretVersion = "v1";
+            await manager.SetSecretValueAsync(secretName, secretVersion, PLAINTEXT);
             var secretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
 
             // Assert
@@ -99,12 +142,55 @@
 
             // Act
             string secretName = "test";
-            await manager.SetSecretValueAsync(secretName, PLAINTEXT);
+            string secretVersion = "v1";
+            await manager.SetSecretValueAsync(secretName, secretVersion, PLAINTEXT);
             var secretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
 
             // Assert
             Assert.False(string.IsNullOrEmpty(secretValue));
             Assert.Equal(PLAINTEXT, secretValue);
+        }
+
+        [Fact]
+        public async Task Set_And_Get_Versioned_Secret_Using_File_And_InMemory_SecretStore_And_Test_Provider_Success()
+        {
+            // Arrange
+            var cryptoProvider = new TestCryptoProvider();
+
+            var manager = new SecretManagerClient()
+                .WithFileSecretStore(FILENAME, cryptoProvider)
+                .WithInMemorySecretStore();
+
+            string secretName = "test";
+
+            // Act
+            var secrets = await manager.GetSecretListAsync(new List<string>() { secretName });
+
+            string version1Name = "v1";
+            await manager.SetSecretValueAsync(secretName, version1Name, PLAINTEXT);
+            secrets = await manager.GetSecretListAsync(new List<string>() { secretName });
+            var version1SecretValue = await manager.GetSecretValueAsync(secretName, version1Name, DateTime.Now);
+            var anySecretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
+
+            // Assert
+            Assert.False(string.IsNullOrEmpty(version1SecretValue));
+            Assert.Equal(PLAINTEXT, version1SecretValue);
+            Assert.False(string.IsNullOrEmpty(anySecretValue));
+
+            // Act
+            string version2Name = "v2";
+            await manager.SetSecretValueAsync(secretName, version2Name, PLAINTEXT + PLAINTEXT);
+            secrets = await manager.GetSecretListAsync(new List<string>() { secretName });
+            version1SecretValue = await manager.GetSecretValueAsync(secretName, version1Name, DateTime.Now);
+            var version2SecretValue = await manager.GetSecretValueAsync(secretName, version2Name, DateTime.Now);
+            anySecretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
+
+            // Assert
+            Assert.False(string.IsNullOrEmpty(version1SecretValue));
+            Assert.Equal(PLAINTEXT, version1SecretValue);
+            Assert.False(string.IsNullOrEmpty(version2SecretValue));
+            Assert.Equal(PLAINTEXT + PLAINTEXT, version2SecretValue);
+            Assert.False(string.IsNullOrEmpty(anySecretValue));
         }
 
         [Fact]
@@ -119,8 +205,9 @@
             await manager.ClearCacheAsync();
 
             // Act
-            var secretName = "test";
-            await manager.SetSecretValueAsync(secretName, PLAINTEXT);
+            string secretName = "test";
+            string secretVersion = "v1";
+            await manager.SetSecretValueAsync(secretName, secretVersion, PLAINTEXT);
             var secretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
 
             // Assert
@@ -141,8 +228,9 @@
 
 
             // Act
-            var secretName = "test";
-            await manager.SetSecretValueAsync(secretName, PLAINTEXT);
+            string secretName = "test";
+            string secretVersion = "v1";
+            await manager.SetSecretValueAsync(secretName, secretVersion, PLAINTEXT);
             var secretValue = await manager.GetSecretValueAsync(secretName, null, DateTime.Now);
 
             // Assert
@@ -168,10 +256,11 @@
                 .WithInMemorySecretStore();
             await manager.ClearCacheAsync();
 
-            await manager.SetSecretValueAsync(keyA, valueA);
-            await manager.SetSecretValueAsync(keyB, valueB);
-            await manager.SetSecretValueAsync(keyC, valueC);
-            await manager.SetSecretValueAsync(keyD, valueD);
+            string secretVersion = "v1";
+            await manager.SetSecretValueAsync(keyA, secretVersion, valueA);
+            await manager.SetSecretValueAsync(keyB, secretVersion, valueB);
+            await manager.SetSecretValueAsync(keyC, secretVersion, valueC);
+            await manager.SetSecretValueAsync(keyD, secretVersion, valueD);
 
             var ret1A = await manager.GetSecretValueAsync(keyA, null, DateTime.Now);
             var ret1B = await manager.GetSecretValueAsync(keyB, null, DateTime.Now);

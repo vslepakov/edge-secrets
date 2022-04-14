@@ -36,7 +36,7 @@
         /// Get a single secret from the chained secret stores.
         /// </summary>
         /// <param name="name">Name of the secret.</param>
-        /// <param name="version">Version of the secret, or null for any.</param>
+        /// <param name="version">Version of the secret, or null for first active version.</param>
         /// <param name="date">Date the secret should be valid, or null for any date.</param>
         /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
         /// <param name="cancellationToken"></param>
@@ -54,7 +54,7 @@
         /// Get the value of a single secret from the chained secret stores.
         /// </summary>
         /// <param name="name">Name of the secret.</param>
-        /// <param name="version">Version of the secret, or null for any.</param>
+        /// <param name="version">Version of the secret, or null for first active version.</param>
         /// <param name="date">Date the secret should be valid, or null for any date.</param>
         /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
         /// <param name="cancellationToken"></param>
@@ -70,7 +70,8 @@
         }
 
         /// <summary>
-        /// Get a list of secrets from the chained secret stores.
+        /// Get all secret versions for a list of secret names from the chained secret stores.
+        /// All versions of the secret will be retrieved.
         /// </summary>
         /// <param name="secretNames">Names of the secrets to retrieve.</param>
         /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
@@ -80,12 +81,7 @@
         {
             if (SecretStore != null)
             {
-                List<Secret> secrets = new();
-                foreach (var secretName in secretNames)
-                {
-                    secrets.Add(new Secret(secretName));
-                }
-                return await SecretStore.RetrieveSecretListAsync(secrets, forceRetrieve, cancellationToken);
+                return await SecretStore.RetrieveSecretListAsync(secretNames, forceRetrieve, cancellationToken);
             }
             return null;
         }
@@ -95,10 +91,10 @@
         /// </summary>
         /// <param name="name">Name of the secret to set.</param>
         /// <param name="value">Value to set the secret to.</param>
-        /// <param name="version">Version of the secret to set, or null for any.</param>
+        /// <param name="version">Version of the secret to set.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task SetSecretValueAsync(string name, string value, string? version = null, CancellationToken cancellationToken = default)
+        public async Task SetSecretValueAsync(string name, string value, string? version, CancellationToken cancellationToken = default)
         {
             if (SecretStore != null)
             {
@@ -109,7 +105,7 @@
                 }
                 else
                 {
-                    secret = new Secret(name, value);
+                    secret = new Secret(name, value, version);
                 }
                 await SecretStore.StoreSecretAsync(secret, cancellationToken);
             }

@@ -5,14 +5,15 @@ namespace EdgeSecrets.SecretManager
     public record class Secret
     {
         public string Name { get; }
+        public string? Version { get; }
         public string? Value { get; init; }
-        public string? Version { get; init; } = default;
         public DateTime ActivationDate { get; init; } = DateTime.MinValue;
         public DateTime ExpirationDate { get; init; } = DateTime.MaxValue;
 
-        public Secret(string name, string? value = null)
+        public Secret(string name, string? version = null, string? value = null)
         {
             Name = name;
+            Version = version;
             Value = value;
         }
 

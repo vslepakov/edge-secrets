@@ -6,8 +6,6 @@ namespace EdgeSecrets.SecretManager
     // List of secrets by name and by version
     public class SecretList : Dictionary<string, Dictionary<string, Secret>>
     {
-        private const string EmptyVersion = "_null_";
-
         /// <summary>
         /// Create a new list of secrets.
         /// </summary>
@@ -29,15 +27,30 @@ namespace EdgeSecrets.SecretManager
         }
 
         /// <summary>
+        /// Get all versions of a secret by name.
+        /// </summary>
+        /// <param name="secretName">Name of the secret to search for.</param>
+        /// <returns>All versions of the secret if found, or null if not found.</returns>
+        public Dictionary<string, Secret>? GetSecretVersions(string secretName)
+        {
+            if (TryGetValue(secretName, out var secretVersions))
+            {
+                return secretVersions;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Get the secret by name, version and date.
         /// </summary>
         /// <param name="secretName">Name of the secret to search for.</param>
-        /// <param name="version">Version of the secret to search for, or null for any version.</param>
+        /// <param name="version">Version of the secret to search for, or null for first active version.</param>
         /// <param name="date">Date to use for validating the secret, or null for any date.</param>
-        /// <returns>The secret if found, the first secret if found more than one, or null if not found.</returns>
-        public Secret? GetSecret(string secretName, string? version, DateTime? date = null)
+        /// <returns>The secret if found, the first valid secret if found more than one, or null if not found.</returns>
+        public Secret? GetSecret(string secretName, string? version = null, DateTime? date = null)
         {
-            if (TryGetValue(secretName, out var secretVersions))
+            var secretVersions = GetSecretVersions(secretName);
+            if (secretVersions != null)
             {
                 if (version != null)
                 {
@@ -70,9 +83,9 @@ namespace EdgeSecrets.SecretManager
         public void SetSecret(Secret secret)
         {
             string? nameKey = secret.Name;
-            if (nameKey != null)
+            string? versionKey = secret.Version;
+            if ((nameKey != null) && (versionKey != null))
             {
-                string versionKey = secret.Version ?? EmptyVersion;
                 if (TryGetValue(nameKey, out var secretVersions))
                 {
                     // Secret already known, so update or add by version

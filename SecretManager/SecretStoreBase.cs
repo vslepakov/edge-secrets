@@ -44,11 +44,11 @@ namespace EdgeSecrets.SecretManager
         }
 
         /// <summary>
-        /// Retrieve single secret by name and date from the local secret store.
+        /// Retrieve single secret by name, version and date from the local secret store.
         /// </summary>
         /// <param name="secretName">Name of the secret to retrieve.</param>
-        /// <param name="version">Name of the version to retrieve.</param>
-        /// <param name="date">Timestamp where the secret should be valid (between activation and expiration).</param>
+        /// <param name="version">Name of the version to retrieve, or null for first active version.</param>
+        /// <param name="date">Date the secret should be valid, or null for any date.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Secret found or null if not found.</returns>
         protected abstract Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken);
@@ -58,8 +58,8 @@ namespace EdgeSecrets.SecretManager
         /// Decrypt the value of the secret from the local store if any crypto provider is available.
         /// </summary>
         /// <param name="secretName">Name of the secret to retrieve.</param>
-        /// <param name="version">Name of the version to retrieve.</param>
-        /// <param name="date">Timestamp where the secret should be valid (between activation and expiration).</param>
+        /// <param name="version">Name of the version to retrieve, or null for first active version.</param>
+        /// <param name="date">Date the secret should be valid, or null for any date.</param>
         /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Secret found (with decrypted value) or null if not found.</returns>
@@ -105,76 +105,82 @@ namespace EdgeSecrets.SecretManager
         }
 
         /// <summary>
-        /// Retrieve list of secrets from the local secret store.
+        /// Retrieve list of secrets by name from the local secret store.
         /// </summary>
-        /// <param name="secrets">List of secrets to retrieve. Secret should have a name and could have a version.</param>
+        /// <param name="secretNames">Names of the secrets to retrieve.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        protected abstract Task<SecretList> RetrieveSecretListInternalAsync(IList<Secret> secrets, CancellationToken cancellationToken);
+        protected abstract Task<SecretList> RetrieveSecretListInternalAsync(IList<string> secretNames, CancellationToken cancellationToken);
 
         /// <summary>
         /// Retrieve list of secrets by name from the local secret store, or external secret store if not found.
         /// Decrypt the value of the secrets from the local store if any crypto provider is available.
         /// </summary>
-        /// <param name="secrets">List of secrets to retrieve.</param>
+        /// <param name="secretNames">Names of the secrets to retrieve.</param>
         /// <param name="forceRetrieve">Force the retrieval of the secret from the deepest secret store source, otherwise cached values can be retured.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<SecretList> RetrieveSecretListAsync(IList<Secret> secrets, bool forceRetrieve, CancellationToken cancellationToken)
+        public async Task<SecretList> RetrieveSecretListAsync(IList<string> secretNames, bool forceRetrieve, CancellationToken cancellationToken)
         {
             SecretList localSecretList = new();
-            List<Secret> notFoundSecrets = new();
+            List<string> notFoundSecretNames = new();
 
             // Get secrets from local secret store (if retrieve from source is not forced) or if the local secret store is the source
             if (!forceRetrieve || IsSource)
             {
-                SecretList internalSecretList = await RetrieveSecretListInternalAsync(secrets, cancellationToken);
-                foreach(var secret in secrets)
+                SecretList internalSecretList = await RetrieveSecretListInternalAsync(secretNames, cancellationToken);
+                foreach(var secretName in secretNames)
                 {
                     // If secret to retrieve is found in local secret store, add to list of found secrets
-                    var internalSecret = internalSecretList.GetSecret(secret.Name, secret.Version);
-                    if (internalSecret != null)
+                    var internalSecretVersions = internalSecretList.GetSecretVersions(secretName);
+                    if (internalSecretVersions != null)
                     {
-                        Secret foundSecret = internalSecret;
-                        if ((_cryptoProvider != null) && (internalSecret.Value != null))
+                        foreach(var internalSecret in internalSecretVersions.Values)
                         {
-                            foundSecret = internalSecret with { Value = await _cryptoProvider.DecryptAsync(internalSecret.Value, _keyId, cancellationToken) };
+                            Secret foundSecret = internalSecret;
+                            if ((_cryptoProvider != null) && (internalSecret.Value != null))
+                            {
+                                foundSecret = internalSecret with { Value = await _cryptoProvider.DecryptAsync(internalSecret.Value, _keyId, cancellationToken) };
+                            }
+                            localSecretList.SetSecret(foundSecret);
                         }
-                        localSecretList.SetSecret(foundSecret);
                     }
-                    // Not found in local secret store, so add to list ofnot found secrets
+                    // Not found in local secret store, so add to list of not found secrets
                     else
                     {
-                        notFoundSecrets.Add(secret);
+                        notFoundSecretNames.Add(secretName);
                     }
                 }
             }
 
             // If not all secrets have been retrieved, retrieve the other secrets from the external secret store
-            if (notFoundSecrets.Count > 0)
+            if (notFoundSecretNames.Count > 0)
             {
                 if (_externalSecretStore != null)
                 {
-                    SecretList externalSecretList = await _externalSecretStore.RetrieveSecretListAsync(notFoundSecrets, forceRetrieve, cancellationToken);
-                    foreach(var secret in notFoundSecrets)
+                    SecretList externalSecretList = await _externalSecretStore.RetrieveSecretListAsync(notFoundSecretNames, forceRetrieve, cancellationToken);
+                    foreach(var secretName in notFoundSecretNames)
                     {
-                        var externalSecret = externalSecretList.GetSecret(secret.Name, secret.Version);
-                        if (externalSecret != null)
+                        // If secret to retrieve is found in external secret store, add to list of found secrets
+                        var externalSecretVersions = externalSecretList.GetSecretVersions(secretName);
+                        if (externalSecretVersions != null)
                         {
-                            // Store the secret in the local secret store with an encrypt value (if crypto provider is available)
-                            Secret storeSecret = externalSecret;
-                            if ((_cryptoProvider != null) && (externalSecret.Value != null))
+                            foreach (var externalSecret in externalSecretVersions.Values)
                             {
-                                storeSecret = externalSecret with { Value = await _cryptoProvider.EncryptAsync(externalSecret.Value, _keyId, cancellationToken) };
-                            }
-                            await StoreSecretInternalAsync(storeSecret, cancellationToken);
+                                Secret storeSecret = externalSecret;
+                                if ((_cryptoProvider != null) && (externalSecret.Value != null))
+                                {
+                                    storeSecret = externalSecret with { Value = await _cryptoProvider.EncryptAsync(externalSecret.Value, _keyId, cancellationToken) };
+                                }
+                                await StoreSecretInternalAsync(storeSecret, cancellationToken);
 
-                            // Add the secret to list of found secrets
-                            localSecretList.SetSecret(externalSecret);
+                                // Add the secret to list of found secrets
+                                localSecretList.SetSecret(externalSecret);
+                            }
                         }
                         else
                         {
-                            Console.WriteLine($"Secret '{secret.Name}' and version '{secret.Version}' not found in local and external secret store");
+                            Console.WriteLine($"Secret '{secretName}' not found in local and external secret store");
                         }
                     }
                 }

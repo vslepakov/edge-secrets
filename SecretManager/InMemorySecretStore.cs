@@ -44,11 +44,11 @@ namespace EdgeSecrets.SecretManager
         }
 
         /// <summary>
-        /// Retrieve single secret by name and data from the local secret store.
+        /// Retrieve single secret by name, version and date from the local secret store.
         /// </summary>
         /// <param name="secretName">Name of the secret to retrieve.</param>
-        /// <param name="version">Name of the version to retrieve.</param>
-        /// <param name="date">Timestamp where the secret should be valid (between activation and expiration).</param>
+        /// <param name="version">Name of the version to retrieve, or null for first active version.</param>
+        /// <param name="date">Date the secret should be valid, or null for any date.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Secret found or null if not found.</returns>
         protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
@@ -57,20 +57,23 @@ namespace EdgeSecrets.SecretManager
         }
 
         /// <summary>
-        /// Retrieve list of secrets from the local secret store.
+        /// Retrieve list of secrets by name from the local secret store.
         /// </summary>
-        /// <param name="secrets">List of secrets to retrieve. Secret should have a name and could have a version.</param>
+        /// <param name="secretNames">Names of the secrets to retrieve.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        protected override async Task<SecretList> RetrieveSecretListInternalAsync(IList<Secret> secrets, CancellationToken cancellationToken)
+        protected override async Task<SecretList> RetrieveSecretListInternalAsync(IList<string> secretNames, CancellationToken cancellationToken)
         {
             SecretList localSecretList = new();
-            foreach(var secret in secrets)
+            foreach(var secretName in secretNames)
             {
-                var cachedSecret = _cachedSecrets.GetSecret(secret.Name, secret.Version);
-                if (cachedSecret != null)
+                var cachedSecretVersions = _cachedSecrets.GetSecretVersions(secretName);
+                if (cachedSecretVersions != null)
                 {
-                    localSecretList.SetSecret(cachedSecret);
+                    foreach (var cachedSecret in cachedSecretVersions.Values)
+                    {
+                        localSecretList.SetSecret(cachedSecret);
+                    }
                 }
             }
             return await Task.FromResult<SecretList>(localSecretList);

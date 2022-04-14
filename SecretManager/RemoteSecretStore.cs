@@ -86,30 +86,37 @@ namespace EdgeSecrets.SecretManager
         }
 
         /// <summary>
-        /// Retrieve single secret by name and data from the local secret store.
+        /// Retrieve single secret by name, version and date from the local secret store.
         /// </summary>
         /// <param name="secretName">Name of the secret to retrieve.</param>
-        /// <param name="version">Name of the version to retrieve.</param>
-        /// <param name="date">Timestamp where the secret should be valid (between activation and expiration).</param>
+        /// <param name="version">Name of the version to retrieve, or null for first active version.</param>
+        /// <param name="date">Date the secret should be valid, or null for any date.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>Secret found or null if not found.</returns>
         protected override async Task<Secret?> RetrieveSecretInternalAsync(string secretName, string? version, DateTime? date, CancellationToken cancellationToken)
         {
-            SecretList? localSecrets = await RetrieveSecretListInternalAsync(new List<Secret>() { new Secret(secretName) }, cancellationToken);
+            SecretList? localSecrets = await RetrieveSecretListInternalAsync(new List<string>() { secretName }, cancellationToken);
             return localSecrets?.GetSecret(secretName, version, date);
         }
 
         /// <summary>
-        /// Retrieve list of secrets from the local secret store.
+        /// Retrieve list of secrets by name from the local secret store.
         /// </summary>
-        /// <param name="secrets">List of secrets to retrieve. Secret should have a name and could have a version.</param>
+        /// <param name="secretNames">Names of the secrets to retrieve.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        protected override async Task<SecretList> RetrieveSecretListInternalAsync(IList<Secret> secrets, CancellationToken cancellationToken)
+        protected override async Task<SecretList> RetrieveSecretListInternalAsync(IList<string> secretNames, CancellationToken cancellationToken)
         {
             SecretList localSecretList = new();
             if (await InitializeModuleClient(cancellationToken))
             {
+                // Create list of secrets to retrieve
+                var secrets = new List<Secret>();
+                foreach (var secretName in secretNames)
+                {
+                    secrets.Add(new Secret(secretName));
+                }
+
                 // Create new request
                 var request = new RequestSecretRequest() { Secrets = secrets };
 
@@ -141,7 +148,6 @@ namespace EdgeSecrets.SecretManager
                             {
                                 localSecretList = new SecretList(remoteSecrets);
                             }
-
                         }                        
                     }
                 }
